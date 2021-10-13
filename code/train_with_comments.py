@@ -1,8 +1,8 @@
-import logging
-import os
+import logging 
+import os 
 import sys
 
-from typing import List, Callable, NoReturn, NewType, Any
+from typing import List, Callable, NoReturn, NewType, Any 
 import dataclasses
 from datasets import load_metric, load_from_disk, Dataset, DatasetDict
 
@@ -38,7 +38,12 @@ def main():
 
     parser = HfArgumentParser(
         (ModelArguments, DataTrainingArguments, TrainingArguments)
-    )
+    ) 
+
+    #하도 arguments가 많아서 허깅페이스 측에서 사용하는 argument parser입니다. 
+    #터미널의 명령을 적합한 데이터 클래스로 쏴주는 역할을 합니다. 
+    #별도의 argument parser를 만들고, 여기에 추가하면 일 처리가 쉬이 될 듯 합니다. 
+
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
     print(model_args.model_name_or_path)
 
@@ -67,11 +72,15 @@ def main():
 
     # AutoConfig를 이용하여 pretrained model 과 tokenizer를 불러옵니다.
     # argument로 원하는 모델 이름을 설정하면 옵션을 바꿀 수 있습니다.
+    # 설정 관련 함수, 이전 대회에서 autoconfig의 하위로 써먹었습니다. 
     config = AutoConfig.from_pretrained(
         model_args.config_name
         if model_args.config_name is not None
         else model_args.model_name_or_path,
     )
+
+    #토크나이저 설정입니다. 해당 함수에서 지원하는 토크나이저에 걸맞는 args가 들어갈 수 있도록 해봅시다.
+
     tokenizer = AutoTokenizer.from_pretrained(
         model_args.tokenizer_name
         if model_args.tokenizer_name is not None
@@ -79,11 +88,12 @@ def main():
         # 'use_fast' argument를 True로 설정할 경우 rust로 구현된 tokenizer를 사용할 수 있습니다.
         # False로 설정할 경우 python으로 구현된 tokenizer를 사용할 수 있으며,
         # rust version이 비교적 속도가 빠릅니다.
+        # rust가 뭔데요...?
         use_fast=True,
     )
     model = AutoModelForQuestionAnswering.from_pretrained(
-        model_args.model_name_or_path,
-        from_tf=bool(".ckpt" in model_args.model_name_or_path),
+        model_args.model_name_or_path,                 #모델 args를 확인해봅시다 
+        from_tf=bool(".ckpt" in model_args.model_name_or_path), #텐서플로우 체크포인트가 있다면 해당 모델을 가져오는 코드입니다.
         config=config,
     )
 

@@ -1,3 +1,10 @@
+
+*.pyc
+*.json
+*.pt
+*.txt
+*.bin
 **/__pycache__
 *.pyc
 cache-*
+

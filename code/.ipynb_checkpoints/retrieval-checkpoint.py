@@ -74,7 +74,7 @@ class SparseRetrieval:
             tokenizer=tokenize_fn,
             ngram_range=(1, 2),
             # ngram_range=(2, 3),
-            max_features=180000,
+            max_features=150000,
         )
 
         self.p_embedding = None  # get_sparse_embedding()로 생성합니다
@@ -111,7 +111,7 @@ class SparseRetrieval:
                 pickle.dump(self.tfidfv, file)
             print("Embedding pickle saved.")
 
-    def build_faiss(self, num_clusters=16) -> NoReturn:
+    def build_faiss(self, num_clusters=32) -> NoReturn:
 
         """
         Summary:
@@ -420,7 +420,7 @@ if __name__ == "__main__":
 
     tokenizer = AutoTokenizer.from_pretrained(
         args.model_name_or_path,
-        use_fast=False,
+        use_fast=True,
     )
 
     retriever = SparseRetrieval(
@@ -430,7 +430,7 @@ if __name__ == "__main__":
     )
     
     retriever.get_sparse_embedding()
-    retriever.build_faiss(num_clusters=16)
+    retriever.build_faiss(num_clusters=32)
 
     query = "대통령을 포함한 미국의 행정부 견제권을 갖는 국가 기관은?"
 

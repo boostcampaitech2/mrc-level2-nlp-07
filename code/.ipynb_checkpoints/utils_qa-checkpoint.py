@@ -43,6 +43,7 @@ logger = logging.getLogger(__name__)
 def set_seed(seed: int = 42):
     """
     seed 고정하는 함수 (random, numpy, torch)
+
     Args:
         seed (:obj:`int`): The seed to set.
     """
@@ -71,6 +72,7 @@ def postprocess_qa_predictions(
     """
     Post-processes : qa model의 prediction 값을 후처리하는 함수
     모델은 start logit과 end logit을 반환하기 때문에, 이를 기반으로 original text로 변경하는 후처리가 필요함
+
     Args:
         examples: 전처리 되지 않은 데이터셋 (see the main script for more information).
         features: 전처리가 진행된 데이터셋 (see the main script for more information).

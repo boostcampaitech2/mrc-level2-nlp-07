@@ -45,7 +45,7 @@ def main():
     # [참고] argument를 manual하게 수정하고 싶은 경우에 아래와 같은 방식을 사용할 수 있습니다
     # training_args.per_device_train_batch_size = 4
     # print(training_args.per_device_train_batch_size)
-    training_args.num_train_epochs = 5
+    training_args.num_train_epochs = 10
     training_args.save_steps = 500
     training_args.save_total_limit = 2
     # training_args.eval_steps = 500
@@ -86,8 +86,10 @@ def main():
         # rust version이 비교적 속도가 빠릅니다.
         use_fast=True,
     )
+
     model = AutoModelForQuestionAnswering.from_pretrained(
         model_args.model_name_or_path,
+        #### from_tf가 문제인 것일까 ####
         from_tf=bool(".ckpt" in model_args.model_name_or_path),
         config=config,
     )

@@ -9,7 +9,7 @@ class ModelArguments:
     """
 
     model_name_or_path: str = field(
-        default="xlm-roberta-large",
+        default="xlm-roberta-base",
         metadata={
             "help": "Path to pretrained model or model identifier from huggingface.co/models"
         },
@@ -21,7 +21,7 @@ class ModelArguments:
         },
     )
     tokenizer_name: Optional[str] = field(
-        default="xlm-roberta-large",
+        default="xlm-roberta-base",
         metadata={
             "help": "Pretrained tokenizer name or path if not the same as model_name"
         },

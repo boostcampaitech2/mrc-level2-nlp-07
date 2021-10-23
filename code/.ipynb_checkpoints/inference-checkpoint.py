@@ -1,6 +1,5 @@
 """
 Open-Domain Question Answering 을 수행하는 inference 코드 입니다.
-
 대부분의 로직은 train.py 와 비슷하나 retrieval, predict 부분이 추가되어 있습니다.
 """
 
@@ -39,6 +38,8 @@ from arguments import (
     ModelArguments,
     DataTrainingArguments,
 )
+
+from preprocess import tokenizer_filter
 
 
 logger = logging.getLogger(__name__)
@@ -96,7 +97,10 @@ def main():
     # True일 경우 : run passage retrieval
     if data_args.eval_retrieval:
         datasets = run_sparse_retrieval(
-            tokenizer.tokenize,
+            #### 이 부분 수정함 ####
+            # tokenizer.tokenize,
+            tokenizer_filter,
+            ####################
             datasets,
             training_args,
             data_args,
@@ -198,7 +202,7 @@ def run_mrc(
             stride=data_args.doc_stride,
             return_overflowing_tokens=True,
             return_offsets_mapping=True,
-            #return_token_type_ids=False, # roberta모델을 사용할 경우 False, bert를 사용할 경우 True로 표기해야합니다.
+            return_token_type_ids=False, # roberta모델을 사용할 경우 False, bert를 사용할 경우 True로 표기해야합니다.
             padding="max_length" if data_args.pad_to_max_length else False,
         )
 

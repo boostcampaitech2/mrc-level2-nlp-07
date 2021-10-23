@@ -39,6 +39,8 @@ from arguments import (
     DataTrainingArguments,
 )
 
+from preprocess import tokenizer_filter
+
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +97,10 @@ def main():
     # True일 경우 : run passage retrieval
     if data_args.eval_retrieval:
         datasets = run_sparse_retrieval(
-            tokenizer.tokenize,
+            #### 이 부분 수정함 ####
+            # tokenizer.tokenize,
+            tokenizer_filter,
+            ####################
             datasets,
             training_args,
             data_args,

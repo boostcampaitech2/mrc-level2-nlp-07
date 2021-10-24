@@ -4,12 +4,15 @@ import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 from pprint import pprint
+import os
+import argparse
+import pickle
 
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 import torch.nn.functional as F
 
-from datasets import load_dataset
+from datasets import load_dataset, load_from_disk
 from transformers import (
     AutoTokenizer,
     BertModel, BertPreTrainedModel,
@@ -18,8 +21,27 @@ from transformers import (
 )
 
 
+# 난수 고정
+def set_seed(random_seed):
+    torch.manual_seed(random_seed)
+    torch.cuda.manual_seed(random_seed)
+    torch.cuda.manual_seed_all(random_seed)  # if use multi-GPU
+    random.seed(random_seed)
+    np.random.seed(random_seed)
+    
+
 class DenseRetrieval:
-    def __init__(self, args, dataset, num_neg, tokenizer, p_encoder, q_encoder):
+    def __init__(self,
+        args,
+        dataset,
+        num_neg,
+        tokenizer,
+        p_encoder,
+        q_encoder
+    ):
+        """
+        학습과 추론에 사용될 여러 셋업을 마쳐봅시다.
+        """
 
         self.args = args
         self.dataset = dataset
@@ -31,7 +53,11 @@ class DenseRetrieval:
 
         self.prepare_in_batch_negative(num_neg=num_neg)
 
-    def prepare_in_batch_negative(self, dataset=None, num_neg=2, tokenizer=None):
+    def prepare_in_batch_negative(self,
+        dataset=None,
+        num_neg=2,
+        tokenizer=None
+    ):
 
         if dataset is None:
             dataset = self.dataset
@@ -56,8 +82,18 @@ class DenseRetrieval:
                     break
 
         # 2. (Question, Passage) 데이터셋 만들어주기
-        q_seqs = tokenizer(dataset["question"], padding="max_length", truncation=True, return_tensors="pt")
-        p_seqs = tokenizer(p_with_neg, padding="max_length", truncation=True, return_tensors="pt")
+        q_seqs = tokenizer(
+            dataset["question"],
+            padding="max_length",
+            truncation=True,
+            return_tensors="pt"
+        )
+        p_seqs = tokenizer(
+            p_with_neg,
+            padding="max_length",
+            truncation=True,
+            return_tensors="pt"
+        )
 
         max_len = p_seqs["input_ids"].size(-1)
         p_seqs["input_ids"] = p_seqs["input_ids"].view(-1, num_neg+1, max_len)
@@ -131,8 +167,8 @@ class DenseRetrieval:
             with tqdm(self.train_dataloader, unit="batch") as tepoch:
                 for batch in tepoch:
 
-                    p_encoder.train()
-                    q_encoder.train()
+                    self.p_encoder.train()
+                    self.q_encoder.train()
             
                     targets = torch.zeros(batch_size).long() # positive example은 전부 첫 번째에 위치하므로
                     targets = targets.to(args.device)
@@ -155,7 +191,7 @@ class DenseRetrieval:
                     q_outputs = self.q_encoder(**q_inputs)
 
                     # Calculate similarity score & loss
-                    p_outputs = p_outputs.view(batch_size, -1, self.num_neg+1)
+                    p_outputs = torch.transpose(p_outputs.view(batch_size, self.num_neg+1, -1), 1, 2)
                     q_outputs = q_outputs.view(batch_size, 1, -1)
 
                     sim_scores = torch.bmm(q_outputs, p_outputs).squeeze()  #(batch_size, num_neg + 1)
@@ -179,7 +215,13 @@ class DenseRetrieval:
                     del p_inputs, q_inputs
 
 
-    def get_relevant_doc(self, query, k=1, args=None, p_encoder=None, q_encoder=None):
+    def get_relevant_doc(self,
+        query,
+        k=1,
+        args=None,
+        p_encoder=None,
+        q_encoder=None
+    ):
     
         if args is None:
             args = self.args
@@ -215,7 +257,9 @@ class DenseRetrieval:
                 p_embs.append(p_emb)
 
         # (num_passage, emb_dim)
-        p_embs = torch.stack(p_embs, dim=0).view(len(self.passage_dataloader.dataset), -1)
+        p_embs = torch.stack(
+            p_embs, dim=0
+        ).view(len(self.passage_dataloader.dataset), -1)
 
         dot_prod_scores = torch.matmul(q_emb, torch.transpose(p_embs, 0, 1))
         rank = torch.argsort(dot_prod_scores, dim=1, descending=True).squeeze()
@@ -246,51 +290,117 @@ class BertEncoder(BertPreTrainedModel):
         pooled_output = outputs[1]
         return pooled_output
     
-def preprocess_wiki():
-    # retrieval 전 passage를 어떻게 전처리 할지 함수 구현해야함
+def main(arg):
     
-
-def main():
-    # 어떻게 실행시킬지 작성
-    # args 도 지정해야함
-    # 데이터셋과 모델은 아래와 같이 불러옵니다.
-    train_dataset = load_dataset("squad_kor_v1")["train"]
-
-    # 메모리가 부족한 경우 일부만 사용하세요 !
-    num_sample = 1500
-    sample_idx = np.random.choice(range(len(train_dataset)), num_sample)
-    train_dataset = train_dataset[sample_idx]
-
-    args = TrainingArguments(
-        output_dir="dense_retireval",
-        evaluation_strategy="epoch",
-        learning_rate=3e-4,
-        per_device_train_batch_size=2,
-        per_device_eval_batch_size=2,
-        num_train_epochs=2,
-        weight_decay=0.01
-    )
-    # model_checkpoint = "klue/bert-base"
-    model_checkpoint = "xlm-roberta-large"
-
-    # 혹시 위에서 사용한 encoder가 있다면 주석처리 후 진행해주세요 (CUDA ...)
-    tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
-    p_encoder = BertEncoder.from_pretrained(model_checkpoint).to(args.device)
-    q_encoder = BertEncoder.from_pretrained(model_checkpoint).to(args.device)
+    set_seed(42) # magic number :)
+    print ("PyTorch version:[%s]."%(torch.__version__))
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    print ("device:[%s]."%(device))
     
-    retriever = DenseRetrieval(
-        args=args,
-        dataset=train_dataset,
-        num_neg=2,
-        tokenizer=tokenizer,
-        p_encoder=p_encoder,
-        q_encoder=q_encoder
-    )
-    # retriever.train()
+    data_path = "../data/"
+    train_path = "train_dataset/"
+    
+    assert arg.mode.lower()=="train" or arg.mode.lower()=="eval", "Set Retrieval Mode : [train] or [eval]"
+    
+    if arg.mode.lower() == "train":
+        train_dataset = load_from_disk(data_path + train_path)["train"]
 
-    query = "유아인에게 타고난 배우라고 말한 드라마 밀회의 감독은?"
-    results = retriever.get_relevant_doc(query=query, k=5)
-    
-    
+        args = TrainingArguments(
+            output_dir=os.path.join(data_path, arg.output_dir),
+            evaluation_strategy="epoch",
+            learning_rate=arg.learning_rate,
+            per_device_train_batch_size=arg.batch_size,
+            per_device_eval_batch_size=arg.batch_size,
+            num_train_epochs=arg.epoch,
+            weight_decay=0.01
+        )
+        model_checkpoint = arg.model_name
+        tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
+        p_encoder = BertEncoder.from_pretrained(model_checkpoint).to(args.device)
+        q_encoder = BertEncoder.from_pretrained(model_checkpoint).to(args.device)
+
+        retriever = DenseRetrieval(
+            args=args,
+            dataset=train_dataset,
+            num_neg=arg.num_neg,
+            tokenizer=tokenizer,
+            p_encoder=p_encoder,
+            q_encoder=q_encoder
+        )
+        retriever.train()
+        
+        torch.save(p_encoder, os.path.join(data_path, 'p_encoder.pt'))
+        torch.save(q_encoder, os.path.join(data_path, 'q_encoder.pt'))
+        print("Models Saved!")
+        
+        query = train_dataset['question'][0]
+        results = retriever.get_relevant_doc(query=query, k=3)
+
+        print(f"[Search Query] {query}\n")
+
+        indices = results.tolist()
+        for i, idx in enumerate(indices):
+            print(f"Top-{i + 1}th Passage (Index {idx})")
+            pprint(retriever.dataset["context"][idx])
+            
+    elif arg.mode.lower() == "eval":
+        train_dataset = load_from_disk(data_path + train_path)["train"]
+        
+        assert os.path.exists(os.path.join(data_path, 'p_encoder.pt')) and os.path.exists(os.path.join(data_path, 'q_encoder.pt')), "Train and Load Models First!!"
+        p_encoder = torch.load(os.path.join(data_path, 'p_encoder.pt'))
+        q_encoder = torch.load(os.paht.join(data_path, 'q_encoder.pt'))
+        p_encoder.eval()
+        q_encoder.eval()
+        
+        args = TrainingArguments(
+            output_dir=os.path.join(data_path, arg.output_dir),
+            evaluation_strategy="epoch",
+            learning_rate=arg.learning_rate,
+            per_device_train_batch_size=arg.batch_size,
+            per_device_eval_batch_size=arg.batch_size,
+            num_train_epochs=arg.epoch,
+            weight_decay=0.01
+        )
+        model_checkpoint = arg.model_name
+        tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
+        
+        retriever = DenseRetrieval(
+            args=args,
+            dataset=train_dataset,
+            num_neg=arg.num_neg,
+            tokenizer=tokenizer,
+            p_encoder=p_encoder,
+            q_encoder=q_encoder
+        )
+        
+        right, wrong = 0, 0
+        for i in tqdm(range(len(train_dataset['question']))):
+            query = train_dataset['question'][0]
+            results = retriever.get_relevant_doc(query=query, k=arg.topk)
+
+            indices = results.tolist()
+            predict = []
+            for i, idx in enumerate(indices):
+                predict.append(retriever.dataset["context"][idx])
+            
+            if train_dataset['context'] in predict:
+                right += 1
+            else:
+                wrong += 1
+                
+        print(f"Top-{arg.topk} Acc. : {100*right/(right+wrong):.2f}%")            
+            
+                
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--mode", type=str, help="[train] or [eval]", default="train")
+    parser.add_argument("--model_name", type=str, help="model name or path", default="klue/bert-base")
+    parser.add_argument("--batch_size", type=int, help="per device batch size", default=2)
+    parser.add_argument("--epoch", type=int, help="num train epochs", default=10)
+    parser.add_argument("--learning_rate", type=float, help="train learning rate", default=3e-4)
+    parser.add_argument("--num_neg", type=int, help="num negative sample per query", default=2)
+    parser.add_argument("--output_dir", type=str, help="model save directory", default="dense_retrieval")
+    parser.add_argument("--topk", type=int, help="num of Top-K for evaluation", default=3)
+    arg = parser.parse_args()
+    main(arg)
+

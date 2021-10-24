@@ -264,6 +264,15 @@ class DenseRetrieval:
         dot_prod_scores = torch.matmul(q_emb, torch.transpose(p_embs, 0, 1))
         rank = torch.argsort(dot_prod_scores, dim=1, descending=True).squeeze()
 
+        ###### 디버깅 코드 ########
+        print(dot_prod_scores.shape)
+        print(dot_prod_scores)
+        # high_scores = []
+        # for i in rank[:k]:
+        #     high_scores.append(dot_prod_scores[i])
+
+        # print(high_scores)
+
         return rank[:k]
     
     
@@ -303,7 +312,7 @@ def main(arg):
     assert arg.mode.lower()=="train" or arg.mode.lower()=="eval", "Set Retrieval Mode : [train] or [eval]"
     
     if arg.mode.lower() == "train":
-        train_dataset = load_from_disk(data_path + train_path)["train"]
+        train_dataset = load_from_disk(data_path + train_path)["train"][:100]
 
         args = TrainingArguments(
             output_dir=os.path.join(data_path, arg.output_dir),
@@ -344,11 +353,11 @@ def main(arg):
             pprint(retriever.dataset["context"][idx])
             
     elif arg.mode.lower() == "eval":
-        train_dataset = load_from_disk(data_path + train_path)["train"]
+        test_dataset = load_from_disk(data_path + train_path)["train"]
         
         assert os.path.exists(os.path.join(data_path, 'p_encoder.pt')) and os.path.exists(os.path.join(data_path, 'q_encoder.pt')), "Train and Load Models First!!"
         p_encoder = torch.load(os.path.join(data_path, 'p_encoder.pt'))
-        q_encoder = torch.load(os.paht.join(data_path, 'q_encoder.pt'))
+        q_encoder = torch.load(os.path.join(data_path, 'q_encoder.pt'))
         p_encoder.eval()
         q_encoder.eval()
         
@@ -366,7 +375,7 @@ def main(arg):
         
         retriever = DenseRetrieval(
             args=args,
-            dataset=train_dataset,
+            dataset=test_dataset,
             num_neg=arg.num_neg,
             tokenizer=tokenizer,
             p_encoder=p_encoder,
@@ -374,20 +383,21 @@ def main(arg):
         )
         
         right, wrong = 0, 0
-        for i in tqdm(range(len(train_dataset['question']))):
-            query = train_dataset['question'][0]
+        for i in tqdm(range(10)):
+            query = test_dataset['question'][i]
+            print(query)
+            print(test_dataset['context'][i])
             results = retriever.get_relevant_doc(query=query, k=arg.topk)
-
             indices = results.tolist()
             predict = []
-            for i, idx in enumerate(indices):
+            # print(predict)
+            for idx in indices:
                 predict.append(retriever.dataset["context"][idx])
-            
-            if train_dataset['context'] in predict:
+            if test_dataset['context'] in predict:
                 right += 1
             else:
                 wrong += 1
-                
+            print(predict)
         print(f"Top-{arg.topk} Acc. : {100*right/(right+wrong):.2f}%")            
             
                 

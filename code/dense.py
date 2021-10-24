@@ -37,7 +37,8 @@ class DenseRetrieval:
         num_neg,
         tokenizer,
         p_encoder,
-        q_encoder
+        q_encoder,
+        mode
     ):
         """
         학습과 추론에 사용될 여러 셋업을 마쳐봅시다.
@@ -50,6 +51,9 @@ class DenseRetrieval:
         self.tokenizer = tokenizer
         self.p_encoder = p_encoder
         self.q_encoder = q_encoder
+
+        self.mode = mode
+        print(f"Mode : {self.mode}")
 
         self.prepare_in_batch_negative(num_neg=num_neg)
 
@@ -67,19 +71,22 @@ class DenseRetrieval:
 
         # 1. In-Batch-Negative 만들기
         # CORPUS를 np.array로 변환해줍니다.
-        corpus = np.array(list(set([example for example in dataset["context"]])))
-        p_with_neg = []
+        if self.mode == 'train':
+            corpus = np.array(list(set([example for example in dataset["context"]])))
+            p_with_neg = []
 
-        for c in dataset["context"]:
-            while True:
-                neg_idxs = np.random.randint(len(corpus), size=num_neg)
+            for c in dataset["context"]:
+                while True:
+                    neg_idxs = np.random.randint(len(corpus), size=num_neg)
 
-                if not c in corpus[neg_idxs]:
-                    p_neg = corpus[neg_idxs]
+                    if not c in corpus[neg_idxs]:
+                        p_neg = corpus[neg_idxs]
 
-                    p_with_neg.append(c)
-                    p_with_neg.extend(p_neg)
-                    break
+                        p_with_neg.append(c)
+                        p_with_neg.extend(p_neg)
+                        break
+        else:
+            p_with_neg = dataset['context']
 
         # 2. (Question, Passage) 데이터셋 만들어주기
         q_seqs = tokenizer(
@@ -96,9 +103,14 @@ class DenseRetrieval:
         )
 
         max_len = p_seqs["input_ids"].size(-1)
-        p_seqs["input_ids"] = p_seqs["input_ids"].view(-1, num_neg+1, max_len)
-        p_seqs["attention_mask"] = p_seqs["attention_mask"].view(-1, num_neg+1, max_len)
-        p_seqs["token_type_ids"] = p_seqs["token_type_ids"].view(-1, num_neg+1, max_len)
+        if self.mode == 'train':
+            p_seqs["input_ids"] = p_seqs["input_ids"].view(-1, num_neg+1, max_len)
+            p_seqs["attention_mask"] = p_seqs["attention_mask"].view(-1, num_neg+1, max_len)
+            p_seqs["token_type_ids"] = p_seqs["token_type_ids"].view(-1, num_neg+1, max_len)
+        else:
+            p_seqs["input_ids"] = p_seqs["input_ids"].view(-1, 1, max_len)
+            p_seqs["attention_mask"] = p_seqs["attention_mask"].view(-1, 1, max_len)
+            p_seqs["token_type_ids"] = p_seqs["token_type_ids"].view(-1, 1, max_len)
 
         train_dataset = TensorDataset(
             p_seqs["input_ids"], p_seqs["attention_mask"], p_seqs["token_type_ids"], 
@@ -126,6 +138,7 @@ class DenseRetrieval:
             passage_dataset,
             batch_size=self.args.per_device_train_batch_size
         )
+        print(f"batch size : {self.args.per_device_train_batch_size}")
 
 
     def train(self, args=None):
@@ -334,7 +347,8 @@ def main(arg):
             num_neg=arg.num_neg,
             tokenizer=tokenizer,
             p_encoder=p_encoder,
-            q_encoder=q_encoder
+            q_encoder=q_encoder,
+            mode=arg.mode.lower(),
         )
         retriever.train()
         
@@ -342,22 +356,25 @@ def main(arg):
         torch.save(q_encoder, os.path.join(data_path, 'q_encoder.pt'))
         print("Models Saved!")
         
-        query = train_dataset['question'][0]
-        results = retriever.get_relevant_doc(query=query, k=3)
+        for i in range(5):
+            query = train_dataset['question'][i]
+            results = retriever.get_relevant_doc(query=query, k=3)
 
-        print(f"[Search Query] {query}\n")
+            print(f"[Search Query] {query}\n")
 
-        indices = results.tolist()
-        for i, idx in enumerate(indices):
-            print(f"Top-{i + 1}th Passage (Index {idx})")
-            pprint(retriever.dataset["context"][idx])
+            indices = results.tolist()
+            for i, idx in enumerate(indices):
+                print(f"Top-{i + 1}th Passage (Index {idx})")
+                pprint(retriever.dataset["context"][idx])
             
     elif arg.mode.lower() == "eval":
         test_dataset = load_from_disk(data_path + train_path)["train"]
         
         assert os.path.exists(os.path.join(data_path, 'p_encoder.pt')) and os.path.exists(os.path.join(data_path, 'q_encoder.pt')), "Train and Load Models First!!"
-        p_encoder = torch.load(os.path.join(data_path, 'p_encoder.pt'))
-        q_encoder = torch.load(os.path.join(data_path, 'q_encoder.pt'))
+        p_encoder = torch.load(os.path.join(data_path, 'p_encoder.pt')).to(device)
+        q_encoder = torch.load(os.path.join(data_path, 'q_encoder.pt')).to(device)
+        # p_encoder.to(device)
+        # q_encoder.to(device)
         p_encoder.eval()
         q_encoder.eval()
         
@@ -365,8 +382,10 @@ def main(arg):
             output_dir=os.path.join(data_path, arg.output_dir),
             evaluation_strategy="epoch",
             learning_rate=arg.learning_rate,
-            per_device_train_batch_size=arg.batch_size,
-            per_device_eval_batch_size=arg.batch_size,
+            per_device_train_batch_size=1,
+            per_device_eval_batch_size=1,
+            # per_device_train_batch_size=arg.batch_size,
+            # per_device_eval_batch_size=arg.batch_size,
             num_train_epochs=arg.epoch,
             weight_decay=0.01
         )
@@ -379,25 +398,30 @@ def main(arg):
             num_neg=arg.num_neg,
             tokenizer=tokenizer,
             p_encoder=p_encoder,
-            q_encoder=q_encoder
+            q_encoder=q_encoder,
+            mode=arg.mode.lower(),
         )
-        
+        sample_idx = np.random.choice(range(100), 20)
+        sample_dataset = test_dataset[sample_idx]
+        print(f"Num Evaluation : {len(sample_dataset['question'])}")
         right, wrong = 0, 0
-        for i in tqdm(range(10)):
-            query = test_dataset['question'][i]
+        for i in tqdm(range(len(sample_dataset['question']))):
+            query = sample_dataset['question'][i]
             print(query)
-            print(test_dataset['context'][i])
+            print(sample_dataset['context'][i])
             results = retriever.get_relevant_doc(query=query, k=arg.topk)
             indices = results.tolist()
             predict = []
-            # print(predict)
-            for idx in indices:
+            for k, idx in enumerate(indices):
                 predict.append(retriever.dataset["context"][idx])
-            if test_dataset['context'] in predict:
+                print("-"*100)
+                print(f"Top-{k+1} predict")
+                print(retriever.dataset["context"][idx])
+            if sample_dataset['context'][i] in predict:
                 right += 1
             else:
                 wrong += 1
-            print(predict)
+            
         print(f"Top-{arg.topk} Acc. : {100*right/(right+wrong):.2f}%")            
             
                 
@@ -407,7 +431,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_name", type=str, help="model name or path", default="klue/bert-base")
     parser.add_argument("--batch_size", type=int, help="per device batch size", default=2)
     parser.add_argument("--epoch", type=int, help="num train epochs", default=10)
-    parser.add_argument("--learning_rate", type=float, help="train learning rate", default=3e-4)
+    parser.add_argument("--learning_rate", type=float, help="train learning rate", default=3e-5)
     parser.add_argument("--num_neg", type=int, help="num negative sample per query", default=2)
     parser.add_argument("--output_dir", type=str, help="model save directory", default="dense_retrieval")
     parser.add_argument("--topk", type=int, help="num of Top-K for evaluation", default=3)

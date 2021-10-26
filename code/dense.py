@@ -19,6 +19,8 @@ from transformers import (
     AdamW, get_linear_schedule_with_warmup,
     TrainingArguments,
 )
+from rank_bm25 import BM25Okapi
+from preprocess import preprocess_retrieval
 
 
 # 난수 고정
@@ -54,8 +56,40 @@ class DenseRetrieval:
 
         self.mode = mode
         print(f"Mode : {self.mode}")
-
+        self.p_with_neg = None
+        if self.mode == "train":
+            self.prepare_bm25()
         self.prepare_in_batch_negative(num_neg=num_neg)
+
+    def prepare_bm25(self, dataset=None, model_name="monologg/koelectra-base-v3-discriminator"):
+        if dataset is None:
+            dataset = self.dataset
+        
+        contexts = list(set([example for example in dataset["context"]]))
+        print("Tokenizing & Creating BM25 started!")
+        preprocessed_contexts = [preprocess_retrieval(corpus) for corpus in tqdm(contexts)]
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        tokenized_wiki = [tokenizer.tokenize(corpus) for corpus in tqdm(preprocessed_contexts)]
+        bm25 = BM25Okapi(tqdm(tokenized_wiki))
+
+        self.p_with_neg = []
+        print("Negative Samples...")
+        for c in tqdm(dataset['context']):
+            tokenized = tokenizer.tokenize(preprocess_retrieval(c))
+            results = bm25.get_scores(tokenized)
+            sorted_result = np.argsort(results)[::-1]
+            doc_indices = sorted_result.tolist()
+
+            self.p_with_neg.append(c)
+            addition = []
+            for idx in doc_indices:
+                if c != dataset['context'][idx] and dataset['context'][idx] not in addition:
+                    addition.append(dataset['context'][idx])
+                if len(addition) == self.num_neg:
+                    self.p_with_neg.extend(addition)
+                    break
+        print(f"Total Length : {len(self.p_with_neg)}")
+        print(f"Total Positive Passages : {len(self.p_with_neg)//(self.num_neg)+1}")
 
     def prepare_in_batch_negative(self,
         dataset=None,
@@ -69,22 +103,10 @@ class DenseRetrieval:
         if tokenizer is None:
             tokenizer = self.tokenizer
 
-        # 1. In-Batch-Negative 만들기
-        # CORPUS를 np.array로 변환해줍니다.
+        # prepare_bm25를 통해 만든 p_with_neg 불러오기
         if self.mode == 'train':
-            corpus = np.array(list(set([example for example in dataset["context"]])))
-            p_with_neg = []
-
-            for c in dataset["context"]:
-                while True:
-                    neg_idxs = np.random.randint(len(corpus), size=num_neg)
-
-                    if not c in corpus[neg_idxs]:
-                        p_neg = corpus[neg_idxs]
-
-                        p_with_neg.append(c)
-                        p_with_neg.extend(p_neg)
-                        break
+            p_with_neg = self.p_with_neg
+                
         else:
             p_with_neg = dataset['context']
 
@@ -278,8 +300,8 @@ class DenseRetrieval:
         rank = torch.argsort(dot_prod_scores, dim=1, descending=True).squeeze()
 
         ###### 디버깅 코드 ########
-        print(dot_prod_scores.shape)
-        print(dot_prod_scores)
+        # print(dot_prod_scores.shape)
+        # print(dot_prod_scores)
         # high_scores = []
         # for i in rank[:k]:
         #     high_scores.append(dot_prod_scores[i])
@@ -325,7 +347,7 @@ def main(arg):
     assert arg.mode.lower()=="train" or arg.mode.lower()=="eval", "Set Retrieval Mode : [train] or [eval]"
     
     if arg.mode.lower() == "train":
-        train_dataset = load_from_disk(data_path + train_path)["train"][:100]
+        train_dataset = load_from_disk(data_path + train_path)["train"]
 
         args = TrainingArguments(
             output_dir=os.path.join(data_path, arg.output_dir),
@@ -365,10 +387,10 @@ def main(arg):
             indices = results.tolist()
             for i, idx in enumerate(indices):
                 print(f"Top-{i + 1}th Passage (Index {idx})")
-                pprint(retriever.dataset["context"][idx])
+                pprint(retriever.dataset["context"][idx]) 
             
     elif arg.mode.lower() == "eval":
-        test_dataset = load_from_disk(data_path + train_path)["train"]
+        test_dataset = load_from_disk(data_path + train_path)["validation"]
         
         assert os.path.exists(os.path.join(data_path, 'p_encoder.pt')) and os.path.exists(os.path.join(data_path, 'q_encoder.pt')), "Train and Load Models First!!"
         p_encoder = torch.load(os.path.join(data_path, 'p_encoder.pt')).to(device)
@@ -401,14 +423,13 @@ def main(arg):
             q_encoder=q_encoder,
             mode=arg.mode.lower(),
         )
-        sample_idx = np.random.choice(range(100), 20)
-        sample_dataset = test_dataset[sample_idx]
-        print(f"Num Evaluation : {len(sample_dataset['question'])}")
+        
+        print(f"Num Evaluation : {len(test_dataset)}")
         right, wrong = 0, 0
-        for i in tqdm(range(len(sample_dataset['question']))):
-            query = sample_dataset['question'][i]
+        for i in tqdm(range(len(test_dataset))):
+            query = test_dataset['question'][i]
             print(query)
-            print(sample_dataset['context'][i])
+            print(test_dataset['context'][i])
             results = retriever.get_relevant_doc(query=query, k=arg.topk)
             indices = results.tolist()
             predict = []
@@ -417,7 +438,7 @@ def main(arg):
                 print("-"*100)
                 print(f"Top-{k+1} predict")
                 print(retriever.dataset["context"][idx])
-            if sample_dataset['context'][i] in predict:
+            if test_dataset['context'][i] in predict:
                 right += 1
             else:
                 wrong += 1
@@ -429,12 +450,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", type=str, help="[train] or [eval]", default="train")
     parser.add_argument("--model_name", type=str, help="model name or path", default="klue/bert-base")
-    parser.add_argument("--batch_size", type=int, help="per device batch size", default=2)
-    parser.add_argument("--epoch", type=int, help="num train epochs", default=10)
-    parser.add_argument("--learning_rate", type=float, help="train learning rate", default=3e-5)
+    parser.add_argument("--batch_size", type=int, help="per device batch size", default=4)
+    parser.add_argument("--epoch", type=int, help="num train epochs", default=50)
+    parser.add_argument("--learning_rate", type=float, help="train learning rate", default=1e-5)
     parser.add_argument("--num_neg", type=int, help="num negative sample per query", default=2)
     parser.add_argument("--output_dir", type=str, help="model save directory", default="dense_retrieval")
     parser.add_argument("--topk", type=int, help="num of Top-K for evaluation", default=3)
     arg = parser.parse_args()
     main(arg)
 
+# Negative Sample 만드는 시간이 매우 오래 걸림

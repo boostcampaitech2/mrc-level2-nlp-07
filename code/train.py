@@ -22,7 +22,7 @@ from tokenizers.models import WordPiece
 from utils_qa import postprocess_qa_predictions, check_no_error
 from trainer_qa import QuestionAnsweringTrainer
 from retrieval import SparseRetrieval
-
+from dense import DenseRetrieval
 from arguments import (
     ModelArguments,
     DataTrainingArguments,
@@ -68,7 +68,7 @@ def main():
     set_seed(training_args.seed)
 
     datasets = load_from_disk(data_args.dataset_name)
-    print(datasets)
+    print(datasets, " dataset loaded")
 
     # AutoConfig를 이용하여 pretrained model 과 tokenizer를 불러옵니다.
     # argument로 원하는 모델 이름을 설정하면 옵션을 바꿀 수 있습니다.
@@ -94,6 +94,7 @@ def main():
         config=config,
     )
 
+
     print(
         type(training_args),
         type(model_args),
@@ -101,7 +102,12 @@ def main():
         type(tokenizer),
         type(model),
     )
-
+    #===========================================================================================
+    if data_args.train_retrieval:
+        retriever = DenseRetrieval(       
+        )
+        retriever.train()
+    #===========================================================================================
     # do_train mrc model 혹은 do_eval mrc model
     if training_args.do_train or training_args.do_eval:
         run_mrc(data_args, training_args, model_args, datasets, tokenizer, model)

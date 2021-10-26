@@ -74,6 +74,10 @@ class DataTrainingArguments:
             "and end predictions are not conditioned on one another."
         },
     )
+    train_retrieval : bool = field(
+        default=True,
+        metadata={"help": "We probably wanna train retrieval model at once."}
+    )
     eval_retrieval: bool = field(
         default=True,
         metadata={"help": "Whether to run passage retrieval using sparse embedding."},

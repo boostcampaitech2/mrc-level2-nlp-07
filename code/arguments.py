@@ -90,3 +90,6 @@ class DataTrainingArguments:
     use_faiss: bool = field(
         default=False, metadata={"help": "Whether to build with faiss"}
     )
+    use_elastic: bool = field(
+        default=False, metadata={"help": "Whether to use elastic search"}
+    )

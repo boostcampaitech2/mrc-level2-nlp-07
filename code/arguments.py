@@ -130,3 +130,6 @@ class DataTrainingArguments:
 #             "help":"Steps for evaluation while training, same as save_steps"
 #         },
 #     )
+    use_elastic: bool = field(
+        default=False, metadata={"help": "Whether to use elastic search"}
+    )

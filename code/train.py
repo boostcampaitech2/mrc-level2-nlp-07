@@ -22,7 +22,7 @@ from tokenizers.models import WordPiece
 from utils_qa import postprocess_qa_predictions, check_no_error
 from trainer_qa import QuestionAnsweringTrainer
 from retrieval import SparseRetrieval
-from dense import DenseRetrieval
+from dense import BertEncoder, DenseRetrieval
 from arguments import (
     ModelArguments,
     DataTrainingArguments,
@@ -35,6 +35,11 @@ logger = logging.getLogger(__name__)
 def main():
     # 가능한 arguments 들은 ./arguments.py 나 transformer package 안의 src/transformers/training_args.py 에서 확인 가능합니다.
     # --help flag 를 실행시켜서 확인할 수 도 있습니다.
+    """이걸 이쁘게 넣을 방법이 생각나지 않는군요. 잘 처리할 방법이 있을까요?"""
+    #====================================retrieval 쪽 arguments===================
+    
+
+
 
     parser = HfArgumentParser(
         (ModelArguments, DataTrainingArguments, TrainingArguments)
@@ -50,10 +55,12 @@ def main():
     training_args.save_total_limit = 2
     # training_args.eval_steps = 500
     training_args.logging_steps = 500
-
+    
+    
+    """이걸 이쁘게 넣을 방법이 생각나지 않는군요. 잘 처리할 방법이 있을까요?"""
+    
     print(f"model is from {model_args.model_name_or_path}")
     print(f"data is from {data_args.dataset_name}")
-
     # logging 설정
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s -    %(message)s",
@@ -104,14 +111,45 @@ def main():
     )
     #===========================================================================================
     if data_args.train_retrieval:
-        retriever = DenseRetrieval(       
-        )
+        retriever = retrieval_ready()
         retriever.train()
+        
     #===========================================================================================
     # do_train mrc model 혹은 do_eval mrc model
     if training_args.do_train or training_args.do_eval:
         run_mrc(data_args, training_args, model_args, datasets, tokenizer, model)
 
+def retrieval_ready(
+    model_args : ModelArguments,
+    training_args : TrainingArguments,
+    bert : BertEncoder,
+    ):
+    train_dataset = load_from_disk(training_args.data_path_retrieval + training_args.train_path_retrieval)["train"][:100]
+
+    ret_args = training_args(
+        output_dir=os.path.join(training_args.data_path_retrieval, training_args.output_dir),
+        evaluation_strategy="epoch",
+        learning_rate=training_args.learning_rate,
+        per_device_train_batch_size=training_args.batch_size,
+        per_device_eval_batch_size=training_args.batch_size,
+        num_train_epochs=training_args.epoch,
+        weight_decay=0.01
+    )
+    model_checkpoint = model_args.model_name
+    tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
+    p_encoder = bert.from_pretrained(model_checkpoint).to(ret_args.device)
+    q_encoder = bert.from_pretrained(model_checkpoint).to(ret_args.device)
+
+    retriever = DenseRetrieval(
+        args=ret_args,
+        dataset=train_dataset,
+        num_neg=training_args.num_neg,
+        tokenizer=tokenizer,
+        p_encoder=p_encoder,
+        q_encoder=q_encoder,
+        mode=training_args.mode.lower(),
+    )
+    return retriever
 
 def run_mrc(
     data_args: DataTrainingArguments,

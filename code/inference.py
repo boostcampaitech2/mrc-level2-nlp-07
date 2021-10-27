@@ -129,7 +129,7 @@ def run_sparse_retrieval(
         )
     elif data_args.use_elastic:
         retriever.build_elastic()
-        retriever.retrieve_elastic(
+        df = retriever.retrieve_elastic(
             datasets["validation"], topk=data_args.top_k_retrieval
         )
     else:

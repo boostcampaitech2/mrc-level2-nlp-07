@@ -1,13 +1,10 @@
 import logging
 import os
 import sys
-
 from typing import List, Callable, NoReturn, NewType, Any
 import dataclasses
 from datasets import load_metric, load_from_disk, Dataset, DatasetDict
-
 from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
-
 from transformers import (
     DataCollatorWithPadding,
     EvalPrediction,
@@ -15,6 +12,8 @@ from transformers import (
     TrainingArguments,
     set_seed,
 )
+from sentence_transformers import SentenceTransformer
+
 
 from tokenizers import Tokenizer
 from tokenizers.models import WordPiece
@@ -22,7 +21,7 @@ from tokenizers.models import WordPiece
 from utils_qa import postprocess_qa_predictions, check_no_error
 from trainer_qa import QuestionAnsweringTrainer
 from retrieval import SparseRetrieval
-from dense import DenseRetrieval
+
 from arguments import (
     ModelArguments,
     DataTrainingArguments,
@@ -36,7 +35,7 @@ logger = logging.getLogger(__name__)
 def main():
     # 가능한 arguments 들은 ./arguments.py 나 transformer package 안의 src/transformers/training_args.py 에서 확인 가능합니다.
     # --help flag 를 실행시켜서 확인할 수 도 있습니다.
-
+    
     parser = HfArgumentParser(
         (ModelArguments, DataTrainingArguments, TrainingArguments)
     )
@@ -103,12 +102,7 @@ def main():
         type(tokenizer),
         type(model),
     )
-    #===========================================================================================
-    if data_args.train_retrieval:
-        retriever = DenseRetrieval(       
-        )
-        retriever.train()
-    #===========================================================================================
+    
     # do_train mrc model 혹은 do_eval mrc model
     if training_args.do_train or training_args.do_eval:
         run_mrc(data_args, training_args, model_args, datasets, tokenizer, model)

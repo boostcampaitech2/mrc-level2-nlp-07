@@ -13,69 +13,32 @@ class QAWithLSTMModel(nn.Module):
         self.LSTM1 = nn.LSTM(input_size=config.hidden_size,hidden_size=config.hidden_size, batch_first=True,bidirectional=True)
         self.maxpool = nn.MaxPool1d(2,stride=2)
         self.gelu = F.gelu
-        self.classify = nn.Linear(config.hidden_size,2,bias=True)
-        self.LSTM1
+        self.flatflat = nn.Flatten()
+        self.classify = nn.Linear(384*1536,2,bias=True)
+        
 
     def forward(self,input_ids=None,attention_mask=None):
         
         with torch.no_grad():
             back_output = self.pretrained(input_ids,attention_mask)
-            
-        back_output = torch.tensor(back_output[-1]).cuda()
-        token_type_ids = self.make_token_type_ids(input_ids)
-        back_output_pooled = torch.tensor(back_output[-1]).cuda()
-        print("################shapes##################")
-        print(back_output.shape)
-        print(back_output_pooled.shape)
-        
-
-
-        # if token_type_ids==0: #query vectors
-        #     lstm_output,(hidden_h,hidden_c) = self.LSTM1(back_output_pooled)
-        #     try:
-        #         concat_query = torch.cat(concat_query,torch.cat(lstm_output,back_output_pooled))
-        #     except:
-        #         concat_query = torch.cat(lstm_output,back_output)
-        #     embeded_query = self.maxpool(concat_query)
-
-
-            
-        # elif token_type_ids==1: #passage
-        #     lstm_output,(hidden_h,hidden_c) = self.LSTM1(back_output_pooled)
-        #     try:
-        #         concat_passage = torch.cat(concat_passage,torch.cat(lstm_output,back_output_pooled))
-        #     except:
-        #         concat_passage = torch.cat(lstm_output,back_output)
-        #     embeded_passage = self.maxpool(concat_passage)
+        back_output = torch.tensor(back_output[0]).cuda()
+        back_output_pooled = back_output
 
         lstm_output,(hidden_h,hidden_c) = self.LSTM1(back_output_pooled)
-        
-        concat_query = torch.cat(lstm_output,back_output)
+        concat_query = torch.cat((lstm_output,back_output_pooled),-1)
+    
         embeded_query = self.maxpool(concat_query)
-
+        
         embeded_vector = embeded_query
         logit = self.gelu(embeded_vector)
+        logit = self.flatflat(logit)
         logit = self.classify(logit)
+        start_logits,end_logits = logit.split(1,dim=-1)
+        start_logits = start_logits.squeeze(-1)
+        end_logits = end_logits.squeeze(-1)
 
-        start_logit, end_logit = logit.split(1,dim=-1)
-        start_logit = start_logit.squeeze(-1)
-        end_logit = end_logit.squeeze(-1)
-
-
+        return  {"start_logit" : start_logits, "end_logit" : end_logits}
         
-
-        return start_logit,end_logit
-        
-
-            
-        
-        
-
-
-
-
-
-    
     def make_token_type_ids(self, input_ids) :
         token_type_ids = []
         for i, input_id in enumerate(input_ids):

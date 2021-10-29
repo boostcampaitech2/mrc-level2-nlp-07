@@ -40,16 +40,15 @@ def make_hard_neg_ctxs(method, result_lst, passages, texts, answers, queries, cn
     topk_lst = []
     for i in tqdm(range(len(texts))):
         tokenized_query = tokenizer.tokenize(preprocess_retrieval(queries[i]))
-        topk, neg_ctxs = 1, []
+        topk = cnt
         while True:
             predict = method.get_top_n(tokenized_query, passages, n=topk)
-            if answers[i] not in predict[-1]:  # 가장 마지막으로 들어온 예측 문장 안에 답이 없다면! -> hard_neg 찾음
-                neg_ctxs.append(predict[-1])
-                if len(neg_ctxs) == cnt:
-                    topk_lst.append(topk)
-                    result_lst.append(neg_ctxs)
-                    break
-            topk += 1
+            neg_ctxs = [ctx for ctx in predict if answers[i] not in ctx]
+            if len(neg_ctxs) >= cnt:
+                topk_lst.append(topk)
+                result_lst.append(neg_ctxs[:cnt])
+                break
+            topk += 10
         if i % 500 == 0:
             print(queries[i], answers[i], "\n", texts[i])
             print(f"{i}th example: max topk is {topk}\n Current lenth of result_lst {len(result_lst)}")

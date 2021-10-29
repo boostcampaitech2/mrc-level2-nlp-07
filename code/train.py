@@ -13,7 +13,7 @@ from transformers import (
     set_seed,
 )
 from sentence_transformers import SentenceTransformer
-
+from modelcustom import QAWithLSTMModel
 
 from tokenizers import Tokenizer
 from tokenizers.models import WordPiece
@@ -27,7 +27,7 @@ from arguments import (
     DataTrainingArguments,
 )
 
-
+device = "cuda:0"
 logger = logging.getLogger(__name__)
 
 
@@ -86,12 +86,17 @@ def main():
         use_fast=True,
     )
 
-    model = AutoModelForQuestionAnswering.from_pretrained(
+    model = QAWithLSTMModel(
+        model_args.model_name_or_path,
+        config=config
+    ).cuda()
+    
+    """AutoModelForQuestionAnswering.from_pretrained(
         model_args.model_name_or_path,
         #### from_tf가 문제인 것일까 ####
         from_tf=bool(".ckpt" in model_args.model_name_or_path),
         config=config,
-    )
+    )"""
 
 
     print(

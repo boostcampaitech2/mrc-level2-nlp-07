@@ -1,0 +1,26 @@
+tensor([[ 0.4614,  0.0616, -0.3503,  ...,  0.0649, -0.2751,  0.2763],
+        [ 0.5108, -0.1190, -0.3131,  ...,  0.1765, -0.2551,  0.5376],
+        [ 0.2402, -0.2452, -0.1245,  ...,  0.1375, -0.6017,  0.3151],
+        ...,
+        [ 0.3420, -0.1827, -0.0982,  ...,  0.2263, -0.6153,  0.3072],
+        [ 0.4973, -0.2503, -0.1032,  ...,  0.1555, -0.4562,  0.2365],
+        [ 0.5995, -0.2679, -0.1978,  ...,  0.0830, -0.4700,  0.2664]],
+       device='cuda:0')
+  0%|                                                                                                                                                                                                            | 0/9980 [00:00<?, ?it/s]Traceback (most recent call last):
+  File "train.py", line 381, in <module>
+    main()
+  File "train.py", line 112, in main
+    run_mrc(data_args, training_args, model_args, datasets, tokenizer, model)
+  File "train.py", line 346, in run_mrc
+    train_result = trainer.train(resume_from_checkpoint=checkpoint)
+  File "/opt/conda/lib/python3.8/site-packages/transformers/trainer.py", line 1316, in train
+    tr_loss_step = self.training_step(model, inputs)
+  File "/opt/conda/lib/python3.8/site-packages/transformers/trainer.py", line 1849, in training_step
+    loss = self.compute_loss(model, inputs)
+  File "/opt/conda/lib/python3.8/site-packages/transformers/trainer.py", line 1881, in compute_loss
+    outputs = model(**inputs)
+  File "/opt/conda/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
+    result = self.forward(*input, **kwargs)
+  File "/opt/ml/mrc-level2-nlp-07/code/modelcustom.py", line 24, in forward
+    back_output = torch.tensor(back_output).cuda()
+RuntimeError: Could not infer dtype of BaseModelOutputWithPoolingAndCrossAttentions

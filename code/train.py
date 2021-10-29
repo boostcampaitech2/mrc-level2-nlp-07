@@ -27,6 +27,7 @@ from arguments import (
     ModelArguments,
     DataTrainingArguments,
 )
+from change_position import change_position
 
 
 logger = logging.getLogger(__name__)
@@ -211,6 +212,8 @@ def run_mrc(
         if "train" not in datasets:
             raise ValueError("--do_train requires a train dataset")
         train_dataset = datasets["train"]
+        # 해당 코드 추가! 
+        train_dataset = change_position(train_dataset)
 
         # dataset에서 train feature를 생성합니다.
         train_dataset = train_dataset.map(

@@ -10,7 +10,7 @@ from tqdm.auto import tqdm
 from contextlib import contextmanager
 from typing import List, Tuple, NoReturn, Any, Optional, Union
 from elasticsearch import Elasticsearch
-
+from preprocess import preprocess_retrieval
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from datasets import (
@@ -502,7 +502,7 @@ class SparseRetrieval:
                     # Retrieve한 Passage의 id, context를 반환합니다.
                     "context_id": doc_indices[idx],
                     "context": " ".join(
-                        [self.contexts[pid] for pid in doc_indices[idx]]
+                        [preprocess_retrieval(self.contexts[pid]) for pid in doc_indices[idx]]
                     ),
                 }
                 if "context" in example.keys() and "answers" in example.keys():
@@ -551,7 +551,7 @@ class SparseRetrieval:
                 if '~' in query:
                     query = query.replace('~', '에서 ')
                 results.append(self.es.search(index=self.INDEX_NAME, q=query, size=k))
-        # print(result[0], len(result)) # length : 240 == len(validation)
+
         doc_score, doc_indices = [], []
         for result in results:
             temp_score, temp_indices = [], []
@@ -560,9 +560,6 @@ class SparseRetrieval:
                 temp_indices.append(int(hit['_id']))
             doc_score.append(temp_score)
             doc_indices.append(temp_indices)
-        # print(doc_score[0], doc_indices[0])
-        # print(len(doc_score), len(doc_score[0]))
-        # print(len(doc_indices), len(doc_indices[0]))
 
         return doc_score, doc_indices
 

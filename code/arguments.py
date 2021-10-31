@@ -95,38 +95,38 @@ class DataTrainingArguments:
         default=True, metadata={"help": "Whether to build with faiss"}
     )
 
-# @dataclass
-# class TrainingArguments:
-#     """
-#     Arguments pertaining to which hyperparameters would trainer takes
-#     """
-#     output_dir: str = field(
-#         default='./models/xlm/',
-#         metadata={
-#             "help": "Path to save training model"
-#         },
-#     )
-#     num_train_epochs: int = field(
-#         default=5,
-#         metadata={
-#             "help": "Number of epochs for training"
-#         },
-#     )
-#     save_total_limit: int = field(
-#         default=2,
-#         metadata={
-#             "help": "Number of checkpoint saved while training"
-#         },
-#     )
-#     save_steps: int = field(
-#         default=500,
-#         metadata={
-#             "help": "Save and delete steps while traininig"
-#         },
-#     )
-#     eval_steps: int = field(
-#         default=500,
-#         metadata={
-#             "help":"Steps for evaluation while training, same as save_steps"
-#         },
-#     )
+@dataclass
+class TrainingArguments:
+    """
+    Arguments pertaining to which hyperparameters would trainer takes
+    """
+    output_dir: str = field(
+        default='./models/xlm/',
+        metadata={
+            "help": "Path to save training model"
+        },
+    )
+    num_train_epochs: int = field(
+        default=5,
+        metadata={
+            "help": "Number of epochs for training"
+        },
+    )
+    save_total_limit: int = field(
+        default=2,
+        metadata={
+            "help": "Number of checkpoint saved while training"
+        },
+    )
+    save_steps: int = field(
+        default=500,
+        metadata={
+            "help": "Save and delete steps while traininig"
+        },
+    )
+    eval_steps: int = field(
+        default=500,
+        metadata={
+            "help":"Steps for evaluation while training, same as save_steps"
+        },
+    )

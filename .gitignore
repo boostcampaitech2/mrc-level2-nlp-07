@@ -8,3 +8,6 @@
 *.pyc
 cache-*
 *.model
+*.log
+*.wandb
+*.yaml

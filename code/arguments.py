@@ -9,7 +9,7 @@ class ModelArguments:
     """
 
     model_name_or_path: str = field(
-        default="klue/roberta-large",
+        default="xlm-roberta-large",
         metadata={
             "help": "Path to pretrained model or model identifier from huggingface.co/models"
         },
@@ -21,7 +21,7 @@ class ModelArguments:
         }
     )
     tokenizer_name: Optional[str] = field(
-        default="klue/roberta-large",
+        default="xlm-roberta-large",
         metadata={
             "help": "Pretrained tokenizer name or path if not the same as model_name"
         },
@@ -35,7 +35,7 @@ class DataTrainingArguments:
     """
 
     dataset_name: Optional[str] = field(
-        default="../data/train_dataset",
+        default="/opt/ml/mrc-level2-nlp-07/data/train_dataset",
         metadata={"help": "The name of the dataset to use."},
     )
     overwrite_cache: bool = field(

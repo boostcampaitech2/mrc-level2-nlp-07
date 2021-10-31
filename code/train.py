@@ -91,12 +91,12 @@ def main():
         config=config
     ).cuda()
     
-    """AutoModelForQuestionAnswering.from_pretrained(
-        model_args.model_name_or_path,
-        #### from_tf가 문제인 것일까 ####
-        from_tf=bool(".ckpt" in model_args.model_name_or_path),
-        config=config,
-    )"""
+    # model = AutoModelForQuestionAnswering.from_pretrained(
+    #     model_args.model_name_or_path,
+    #     #### from_tf가 문제인 것일까 ####
+    #     from_tf=bool(".ckpt" in model_args.model_name_or_path),
+    #     config=config,
+    # )
 
 
     print(

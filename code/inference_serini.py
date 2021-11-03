@@ -158,8 +158,12 @@ def run_golden_retrieval(
                 "context": Value(dtype="string", id=None),
                 "id": Value(dtype="string", id=None),
                 "question": Value(dtype="string", id=None),
-                "doc_scores": Value(dtype="float32", id=None),
-                "doc_offsets": Value(dtype="int64", id=None),
+                "doc_scores": Sequence(
+                    Value(dtype="float", id=None)
+                ),
+                "doc_offsets": Sequence(
+                    Value(dtype="int64", id=None)
+                ),
             }
         )
 

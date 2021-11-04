@@ -5,7 +5,12 @@ from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
 import numpy as np
 import torch.nn.functional as F
 from transformers.modeling_outputs import QuestionAnsweringModelOutput
+from transformers.utils.dummy_pt_objects import AutoModelForQuestionAnswering
 device = "cuda:0"
+
+
+
+
 class QAWithLSTMModel(nn.Module):
     def __init__(self,model_args,config):
         super().__init__()
@@ -16,7 +21,8 @@ class QAWithLSTMModel(nn.Module):
         self.gelu = F.gelu
         self.flatflat = nn.Flatten()
         self.classify = nn.Linear(config.hidden_size,2,bias=True)
-        self.softmax = nn.Softmax()
+        self.softmax = nn.Softmax(dim=0)
+        print(config)
 
     def forward(self, input_ids=None, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, inputs_embeds=None, start_positions=None, end_positions=None, output_attentions=None, output_hidden_states=None, return_dict=None):
         
@@ -29,6 +35,9 @@ class QAWithLSTMModel(nn.Module):
                 output_attentions=output_attentions,
                 output_hidden_states=output_hidden_states,
                 return_dict=return_dict)
+        print(back_output)
+        print(back_output.size())
+        assert 1 == 7
         back_output = back_output[0]
         back_output_pooled = back_output
         
@@ -39,10 +48,11 @@ class QAWithLSTMModel(nn.Module):
         logit = self.gelu(embeded_vector)
         logit = self.classify(logit)
         logit = self.softmax(logit)*1000
+
+
         start_logits,end_logits = logit.split(1,dim=-1)
         start_logits = start_logits.squeeze(-1).contiguous()
         end_logits = end_logits.squeeze(-1).contiguous()
-
 
 
         total_loss = None
@@ -63,8 +73,14 @@ class QAWithLSTMModel(nn.Module):
             total_loss = (start_loss + end_loss) / 2
             
 
+            
+
         if not return_dict:
-            output = (start_logits, end_logits) 
+            # start_logits = start_logits.unsqueeze(-1)
+            # end_logits = end_logits.unsqueeze(-1)
+            # stacked_logit = torch.cat((start_logits,end_logits),dim=2)
+            # output = torch.cat((stacked_logit,back_output[:,:,2:]),dim=2)
+            output = (start_logits,end_logits)
             return ((total_loss,) + output) if total_loss is not None else output
 
         return QuestionAnsweringModelOutput(

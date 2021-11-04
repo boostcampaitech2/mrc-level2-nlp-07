@@ -7,12 +7,13 @@ import pandas as pd
 from tqdm.auto import tqdm
 from pprint import pprint
 import re
-
+import torch.utils.checkpoint
 import time
 import os
 import argparse
 from elasticsearch import Elasticsearch
 from sklearn.preprocessing import MinMaxScaler
+import wandb
 
 import torch
 from torch.utils.data import DataLoader, TensorDataset
@@ -420,11 +421,9 @@ class DenseRetrieval:
                     "id": example["id"],
                     # Retrieve한 Passage의 id, context를 반환합니다.
                     "context_id": doc_indices[idx],
-                    "context_score": doc_scores[idx],
                     "context": " ".join(
-                        [self.contexts[pid] for pid in doc_indices[idx]]                    
+                        [self.contexts[pid] for pid in doc_indices[idx]]
                     ),
-                    # "context": [self.contexts[pid] for pid in doc_indices[idx]] 
                 }
                 if "context" in example.keys() and "answers" in example.keys():
                     # validation 데이터를 사용하면 ground_truth context와 answer도 반환합니다.
@@ -472,14 +471,14 @@ def main(arg):
         os.mkdir('./dense_encoder')
 
     output_path = "./dense_encoder/" + arg.output_dir
+    if not os.path.exists(output_path):
+        os.mkdir(output_path)
 
     assert arg.mode.lower()=="train" or arg.mode.lower()=="eval", "Set Retrieval Mode : [train] or [eval]"
     
     if arg.mode.lower() == "train":
         train_path = "negative_samples_all.csv"
         train_dataset = pd.read_csv(data_path + train_path, engine="python")
-        if not os.path.exists(output_path):
-            os.mkdir(output_path)
 
         args = TrainingArguments(
             output_dir=output_path,
@@ -529,6 +528,10 @@ def main(arg):
         assert os.path.exists(os.path.join(output_path, 'p_encoder.pt')) and os.path.exists(os.path.join(output_path, 'q_encoder.pt')), "Train and Load Models First!!"
         p_encoder = torch.load(os.path.join(output_path, 'p_encoder.pt')).to(device)
         q_encoder = torch.load(os.path.join(output_path, 'q_encoder.pt')).to(device)
+        p_encoder.config.gradient_checkpointing=True
+        q_encoder.config.gradient_checkpointing=True
+        print(p_encoder.config)
+        
         p_encoder.eval()
         q_encoder.eval()
         

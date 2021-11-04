@@ -9,7 +9,7 @@ class ModelArguments:
     """
 
     model_name_or_path: str = field(
-        default="xlm-roberta-large",
+        default="klue/roberta-large",
         metadata={
             "help": "Path to pretrained model or model identifier from huggingface.co/models"
         },
@@ -21,7 +21,7 @@ class ModelArguments:
         }
     )
     tokenizer_name: Optional[str] = field(
-        default="xlm-roberta-large",
+        default="klue/roberta-large",
         metadata={
             "help": "Pretrained tokenizer name or path if not the same as model_name"
         },
@@ -86,7 +86,7 @@ class DataTrainingArguments:
         default=32, metadata={"help": "Define how many clusters to use for faiss."}
     )
     top_k_retrieval: int = field(
-        default=1,
+        default=10,
         metadata={
             "help": "Define how many top-k passages to retrieve based on similarity."
         },
@@ -134,4 +134,16 @@ class TrainingArguments:
     
     use_elastic: bool = field(
         default=False, metadata={"help": "Whether to use elastic search"},
+    )
+    learning_rate: float = field(
+        default=1e-6,
+        metadata={
+            "help": "The initial learning rate"
+        },
+    )
+    evaluation_strategy: str = field(
+        default='epoch',
+        metadata={
+            "help": "The evaluation strategy to adopt during training"
+        },
     )

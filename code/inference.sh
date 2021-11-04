@@ -1,5 +1,6 @@
 python inference.py \
-    --output_dir ./outputs/xlm/ \
-    --dataset_name ../data/test_dataset/ \
-    --model_name_or_path ./models/xlm/ \
-    --do_predict 
+        --output_dir ./outputs/custom_allhard20_topk9/ \
+        --dataset_name ../data/test_dataset/ \
+        --top_k_retrieval 9 \
+        --do_predict \
+        --overwrite_output_dir

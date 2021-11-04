@@ -20,7 +20,7 @@ from datasets import (
     DatasetDict,
 )
 
-from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
+from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer,AutoModel
 
 from transformers import (
     DataCollatorWithPadding,

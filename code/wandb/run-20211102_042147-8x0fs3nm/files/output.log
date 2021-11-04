@@ -1,0 +1,158 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  1%|█▋                                                                                                                           | 366/26148 [04:45<5:34:19,  1.29it/s]Traceback (most recent call last):
+  File "train.py", line 394, in <module>
+    main()
+  File "train.py", line 117, in main
+    run_mrc(data_args, training_args, model_args, datasets, tokenizer, model)
+  File "train.py", line 359, in run_mrc
+    train_result = trainer.train(resume_from_checkpoint=checkpoint)
+  File "/opt/conda/lib/python3.8/site-packages/transformers/trainer.py", line 1120, in train
+    tr_loss += self.training_step(model, inputs)
+  File "/opt/conda/lib/python3.8/site-packages/transformers/trainer.py", line 1542, in training_step
+    loss.backward()
+  File "/opt/conda/lib/python3.8/site-packages/torch/tensor.py", line 221, in backward
+    torch.autograd.backward(self, gradient, retain_graph, create_graph)
+  File "/opt/conda/lib/python3.8/site-packages/torch/autograd/__init__.py", line 130, in backward
+    Variable._execution_engine.run_backward(
+KeyboardInterrupt

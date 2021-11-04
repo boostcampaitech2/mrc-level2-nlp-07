@@ -32,7 +32,7 @@ from transformers import (
 
 from utils_qa import postprocess_qa_predictions, check_no_error
 from trainer_qa import QuestionAnsweringTrainer
-# from retrieval import SparseRetrieval
+
 from golden_retriever import DenseRetrieval, BertEncoder
 
 from arguments import (
@@ -123,8 +123,9 @@ def run_golden_retrieval(
     data_path: str = "../data",
     context_path: str = "wikipedia_documents.json",
 ) -> DatasetDict:
-    output_path = "./dense_encoder/dense_retrieval_allhard_20/"
+    output_path = "./dense_encoder/dense_retrieval/"
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    print("Loading Dense Encoder")
     p_encoder = torch.load(os.path.join(output_path, 'p_encoder.pt')).to(device)
     q_encoder = torch.load(os.path.join(output_path, 'q_encoder.pt')).to(device)
 
@@ -137,7 +138,7 @@ def run_golden_retrieval(
             num_train_epochs=None,
             weight_decay=0.01
         )
-
+    
     # Query에 맞는 Passage들을 Retrieval 합니다.
     retriever = DenseRetrieval(
         args=args,
@@ -153,8 +154,9 @@ def run_golden_retrieval(
         df = retriever.retrieve_elastic(
             datasets["validation"], topk=data_args.top_k_retrieval
         )
-    else:
-        df = retriever.retrieve(datasets["validation"], topk=data_args.top_k_retrieval)
+
+
+    df = retriever.retrieve(datasets["validation"], topk=data_args.top_k_retrieval)
 
     # test data 에 대해선 정답이 없으므로 id question context 로만 데이터셋이 구성됩니다.
     if training_args.do_predict:

@@ -528,10 +528,7 @@ def main(arg):
         assert os.path.exists(os.path.join(output_path, 'p_encoder.pt')) and os.path.exists(os.path.join(output_path, 'q_encoder.pt')), "Train and Load Models First!!"
         p_encoder = torch.load(os.path.join(output_path, 'p_encoder.pt')).to(device)
         q_encoder = torch.load(os.path.join(output_path, 'q_encoder.pt')).to(device)
-        p_encoder.config.gradient_checkpointing=True
-        q_encoder.config.gradient_checkpointing=True
-        print(p_encoder.config)
-        
+        # assert os.path.exists(os.path.join("./dense_encoder/", 'p_encoder.pt')) and os.path.exists(os.path.join("./dense_encoder/", 'q_encoder.pt')), "Train and Load Models First!!"
         p_encoder.eval()
         q_encoder.eval()
         

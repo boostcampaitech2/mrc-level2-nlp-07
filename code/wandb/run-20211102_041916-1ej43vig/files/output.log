@@ -1,0 +1,36 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  0%|▏                                                                                                                             | 57/43580 [00:43<9:14:26,  1.31it/s]Traceback (most recent call last):
+  File "train.py", line 394, in <module>
+    main()
+  File "train.py", line 117, in main
+    run_mrc(data_args, training_args, model_args, datasets, tokenizer, model)
+  File "train.py", line 359, in run_mrc
+    train_result = trainer.train(resume_from_checkpoint=checkpoint)
+  File "/opt/conda/lib/python3.8/site-packages/transformers/trainer.py", line 1162, in train
+    self.optimizer.step()
+  File "/opt/conda/lib/python3.8/site-packages/torch/optim/lr_scheduler.py", line 67, in wrapper
+    return wrapped(*args, **kwargs)
+  File "/opt/conda/lib/python3.8/site-packages/transformers/optimization.py", line 346, in step
+    exp_avg_sq.mul_(beta2).addcmul_(grad, grad, value=1.0 - beta2)
+KeyboardInterrupt

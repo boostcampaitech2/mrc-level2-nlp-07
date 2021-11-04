@@ -30,10 +30,10 @@ from transformers import (
     set_seed,
 )
 
-from utils_qa import postprocess_qa_predictions, check_no_error
+from utils_qa_serini import postprocess_qa_predictions, check_no_error
 from trainer_qa import QuestionAnsweringTrainer
 from retrieval import SparseRetrieval
-from golden_retriever import DenseRetrieval, BertEncoder
+from golden_serini import DenseRetrieval, BertEncoder
 
 from arguments import (
     ModelArguments,
@@ -158,6 +158,12 @@ def run_golden_retrieval(
                 "context": Value(dtype="string", id=None),
                 "id": Value(dtype="string", id=None),
                 "question": Value(dtype="string", id=None),
+                "doc_scores": Sequence(
+                    Value(dtype="float", id=None)
+                ),
+                "doc_offsets": Sequence(
+                    Value(dtype="int64", id=None)
+                ),
             }
         )
 
@@ -176,6 +182,12 @@ def run_golden_retrieval(
                 "context": Value(dtype="string", id=None),
                 "id": Value(dtype="string", id=None),
                 "question": Value(dtype="string", id=None),
+                "doc_scores": Sequence(
+                    Value(dtype="float", id=None)
+                ),
+                "doc_offsets": Sequence(
+                    Value(dtype="int64", id=None)
+                ),
             }
         )
     datasets = DatasetDict({"validation": Dataset.from_pandas(df, features=f)})

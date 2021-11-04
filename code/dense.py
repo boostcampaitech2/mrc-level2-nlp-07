@@ -56,40 +56,7 @@ class DenseRetrieval:
 
         self.mode = mode
         print(f"Mode : {self.mode}")
-        self.p_with_neg = None
-        if self.mode == "train":
-            self.prepare_bm25()
         self.prepare_in_batch_negative(num_neg=num_neg)
-
-    def prepare_bm25(self, dataset=None, model_name="monologg/koelectra-base-v3-discriminator"):
-        if dataset is None:
-            dataset = self.dataset
-        
-        contexts = list(set([example for example in dataset["context"]]))
-        print("Tokenizing & Creating BM25 started!")
-        preprocessed_contexts = [preprocess_retrieval(corpus) for corpus in tqdm(contexts)]
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        tokenized_wiki = [tokenizer.tokenize(corpus) for corpus in tqdm(preprocessed_contexts)]
-        bm25 = BM25Okapi(tqdm(tokenized_wiki))
-
-        self.p_with_neg = []
-        print("Negative Samples...")
-        for c in tqdm(dataset['context']):
-            tokenized = tokenizer.tokenize(preprocess_retrieval(c))
-            results = bm25.get_scores(tokenized)
-            sorted_result = np.argsort(results)[::-1]
-            doc_indices = sorted_result.tolist()
-
-            self.p_with_neg.append(c)
-            addition = []
-            for idx in doc_indices:
-                if c != dataset['context'][idx] and dataset['context'][idx] not in addition:
-                    addition.append(dataset['context'][idx])
-                if len(addition) == self.num_neg:
-                    self.p_with_neg.extend(addition)
-                    break
-        print(f"Total Length : {len(self.p_with_neg)}")
-        print(f"Total Positive Passages : {len(self.p_with_neg)//(self.num_neg)+1}")
 
     def prepare_in_batch_negative(self,
         dataset=None,
@@ -105,25 +72,35 @@ class DenseRetrieval:
 
         # prepare_bm25를 통해 만든 p_with_neg 불러오기
         if self.mode == 'train':
-            p_with_neg = self.p_with_neg
+            print(f"Make in-batch negative samples...")
+            p_with_neg = []
+            ground_truth = list(dataset['context'])
+            negative_samples = list(dataset['negative_samples'])
+            if num_neg > len(negative_samples[0]):
+                num_neg = len(negative_samples[0])
+            for i in tqdm(range(len(dataset))):
+                p_with_neg.append(ground_truth[i])
+                p_with_neg.extend(negative_samples[i][:num_neg])
                 
         else:
-            p_with_neg = dataset['context']
+            p_with_neg = list(dataset['context'])
 
         # 2. (Question, Passage) 데이터셋 만들어주기
+        queries = list(dataset['question'])
         q_seqs = tokenizer(
-            dataset["question"],
+            queries,
             padding="max_length",
             truncation=True,
             return_tensors="pt"
         )
+        print("q_seqs prepared!")
         p_seqs = tokenizer(
             p_with_neg,
             padding="max_length",
             truncation=True,
             return_tensors="pt"
         )
-
+        print("p_seqs prepared!")
         max_len = p_seqs["input_ids"].size(-1)
         if self.mode == 'train':
             p_seqs["input_ids"] = p_seqs["input_ids"].view(-1, num_neg+1, max_len)
@@ -146,7 +123,8 @@ class DenseRetrieval:
         )
 
         valid_seqs = tokenizer(
-            dataset["context"],
+            # dataset["context"],
+            ground_truth,
             padding="max_length",
             truncation=True,
             return_tensors="pt"
@@ -229,6 +207,8 @@ class DenseRetrieval:
                     p_outputs = torch.transpose(p_outputs.view(batch_size, self.num_neg+1, -1), 1, 2)
                     q_outputs = q_outputs.view(batch_size, 1, -1)
 
+                    # print(p_outputs.size())
+                    # print(q_outputs.size())
                     sim_scores = torch.bmm(q_outputs, p_outputs).squeeze()  #(batch_size, num_neg + 1)
                     sim_scores = sim_scores.view(batch_size, -1)
                     sim_scores = F.log_softmax(sim_scores, dim=1)
@@ -298,16 +278,6 @@ class DenseRetrieval:
 
         dot_prod_scores = torch.matmul(q_emb, torch.transpose(p_embs, 0, 1))
         rank = torch.argsort(dot_prod_scores, dim=1, descending=True).squeeze()
-
-        ###### 디버깅 코드 ########
-        # print(dot_prod_scores.shape)
-        # print(dot_prod_scores)
-        # high_scores = []
-        # for i in rank[:k]:
-        #     high_scores.append(dot_prod_scores[i])
-
-        # print(high_scores)
-
         return rank[:k]
     
     
@@ -347,7 +317,7 @@ def main(arg):
     assert arg.mode.lower()=="train" or arg.mode.lower()=="eval", "Set Retrieval Mode : [train] or [eval]"
     
     if arg.mode.lower() == "train":
-        train_dataset = load_from_disk(data_path + train_path)["train"]
+        train_dataset = pd.read_csv("../negative_samples.csv")[:100]
 
         args = TrainingArguments(
             output_dir=os.path.join(data_path, arg.output_dir),
@@ -451,7 +421,7 @@ if __name__ == "__main__":
     parser.add_argument("--mode", type=str, help="[train] or [eval]", default="train")
     parser.add_argument("--model_name", type=str, help="model name or path", default="klue/bert-base")
     parser.add_argument("--batch_size", type=int, help="per device batch size", default=4)
-    parser.add_argument("--epoch", type=int, help="num train epochs", default=50)
+    parser.add_argument("--epoch", type=int, help="num train epochs", default=30)
     parser.add_argument("--learning_rate", type=float, help="train learning rate", default=1e-5)
     parser.add_argument("--num_neg", type=int, help="num negative sample per query", default=2)
     parser.add_argument("--output_dir", type=str, help="model save directory", default="dense_retrieval")

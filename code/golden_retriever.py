@@ -6,8 +6,9 @@ import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 from pprint import pprint
-import re
 
+import re
+import torch.utils.checkpoint
 import time
 import os
 import argparse
@@ -29,6 +30,9 @@ from transformers import (
 )
 from rank_bm25 import BM25Okapi
 from preprocess import preprocess_retrieval
+
+
+
 
 # 난수 고정
 def set_seed(random_seed):
@@ -108,6 +112,7 @@ class DenseRetrieval:
     
     def get_elasticsearch(self):
 
+
         self.es = Elasticsearch('localhost:9200', timeout=30, max_retries=10, retry_in_timeout=True)
         INDEX_NAME = "wiki_index"
         if self.es.indices.exists(INDEX_NAME):  # host에 이미 ES index 생성된 경우 -> 그대로 사용
@@ -134,6 +139,7 @@ class DenseRetrieval:
             
             for doc_id, doc in tqdm(DOCS.items(), desc="ES training..!"):
                 self.es.index(index=INDEX_NAME,  id=doc_id, body=doc)
+
 
 
     def get_relevent_elasticsearch(self, query, k=20):
@@ -321,11 +327,13 @@ class DenseRetrieval:
         if q_encoder is None:
             q_encoder = self.q_encoder
 
+
         scaler = MinMaxScaler()  # 정규화 
         ALPHA = 0.75
         es_scores, es_indices = self.get_relevent_elasticsearch(query, k=100)
         # es_scores = np.array(es_scores).reshape(-1, 1)  
         # es_scores = scaler.fit_transform(es_scores).flatten().tolist()  # es_scores 정규화
+
 
         cadidates = [self.contexts[idx] for idx in es_indices]
         mapping = {i:v for i, v in enumerate(es_indices)}
@@ -366,8 +374,10 @@ class DenseRetrieval:
         dot_prod_scores = dot_prod_scores.squeeze().tolist()
         scores = [dot_prod_scores[idx] for idx in rank]
 
+
         # scores = np.array(scores).reshape(-1, 1)  
         # scores = scaler.fit_transform(scores).flatten().tolist()  # dense_scores 정규화
+        
 
         rank = rank.tolist()
         dense_tops = [[mapping[index], score] for index, score in zip(rank, scores)]
@@ -412,7 +422,9 @@ class DenseRetrieval:
                     query_or_dataset["question"], k=topk
                 )
             for idx, example in enumerate(
+
                 tqdm(query_or_dataset, desc="Golden retrieval: ")
+
             ):
                 tmp = {
                     # Query와 해당 id를 반환합니다.
@@ -420,11 +432,13 @@ class DenseRetrieval:
                     "id": example["id"],
                     # Retrieve한 Passage의 id, context를 반환합니다.
                     "context_id": doc_indices[idx],
+
                     "context_score": doc_scores[idx],
                     "context": " ".join(
                         [self.contexts[pid] for pid in doc_indices[idx]]                    
                     ),
                     # "context": [self.contexts[pid] for pid in doc_indices[idx]] 
+
                 }
                 if "context" in example.keys() and "answers" in example.keys():
                     # validation 데이터를 사용하면 ground_truth context와 answer도 반환합니다.
@@ -435,12 +449,14 @@ class DenseRetrieval:
             cqas = pd.DataFrame(total)
             return cqas
     
-    
+
+
 class BertEncoder(BertPreTrainedModel):
     def __init__(self, config):
         super(BertEncoder, self).__init__(config)
-
+        
         self.bert = BertModel(config)
+        
         self.init_weights()
       
     def forward(
@@ -473,13 +489,18 @@ def main(arg):
 
     output_path = "./dense_encoder/" + arg.output_dir
 
+
+
+
     assert arg.mode.lower()=="train" or arg.mode.lower()=="eval", "Set Retrieval Mode : [train] or [eval]"
     
     if arg.mode.lower() == "train":
         train_path = "negative_samples_all.csv"
         train_dataset = pd.read_csv(data_path + train_path, engine="python")
+
         if not os.path.exists(output_path):
             os.mkdir(output_path)
+
 
         args = TrainingArguments(
             output_dir=output_path,
@@ -492,8 +513,10 @@ def main(arg):
         )
         model_checkpoint = arg.model_name
         tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
+
         p_encoder = BertEncoder.from_pretrained(model_checkpoint).to(args.device)
         q_encoder = BertEncoder.from_pretrained(model_checkpoint).to(args.device)
+
 
         retriever = DenseRetrieval(
             args=args,
@@ -529,6 +552,12 @@ def main(arg):
         assert os.path.exists(os.path.join(output_path, 'p_encoder.pt')) and os.path.exists(os.path.join(output_path, 'q_encoder.pt')), "Train and Load Models First!!"
         p_encoder = torch.load(os.path.join(output_path, 'p_encoder.pt')).to(device)
         q_encoder = torch.load(os.path.join(output_path, 'q_encoder.pt')).to(device)
+
+        p_encoder.config.gradient_checkpointing=True
+        q_encoder.config.gradient_checkpointing=True
+        print(p_encoder.config)
+        # assert os.path.exists(os.path.join("./dense_encoder/", 'p_encoder.pt')) and os.path.exists(os.path.join("./dense_encoder/", 'q_encoder.pt')), "Train and Load Models First!!"
+
         p_encoder.eval()
         q_encoder.eval()
         
@@ -557,8 +586,10 @@ def main(arg):
         )
         
         print(f"Num Evaluation : {len(test_dataset)}")
+
         right_wrong = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
         k_lst = [1, 3, 5, 7, 9, 10, 15, 20]
+
         for i in tqdm(range(len(test_dataset['question']))):
             query = test_dataset['question'][i]
             if i % 50 == 0:
@@ -572,6 +603,7 @@ def main(arg):
                     print("-"*100)
                     print(f"Top-{k+1} predict")
                     print(retriever.contexts[idx])
+
 
             for k_idx in range(len(k_lst)):
                 k = k_lst[k_idx]
@@ -587,6 +619,7 @@ def main(arg):
             total = sum(right_wrong[k_idx])
             score = 100 * right / total
             print(f"Top-{k_lst[k_idx]} Acc. : {score:.2f}%")            
+
             
                 
 if __name__ == "__main__":

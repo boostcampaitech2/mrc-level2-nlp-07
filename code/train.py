@@ -1,13 +1,10 @@
 import logging
 import os
 import sys
-
 from typing import List, Callable, NoReturn, NewType, Any
 import dataclasses
 from datasets import load_metric, load_from_disk, Dataset, DatasetDict
-
 from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
-
 from transformers import (
     DataCollatorWithPadding,
     EvalPrediction,
@@ -16,26 +13,27 @@ from transformers import (
     set_seed,
 )
 
+from modelcustom import QAWithLSTMModel
+
 from tokenizers import Tokenizer
 from tokenizers.models import WordPiece
-
+from AEModel import ConvQAModel
 from utils_qa import postprocess_qa_predictions, check_no_error
 from trainer_qa import QuestionAnsweringTrainer
 from retrieval import SparseRetrieval
-from dense import DenseRetrieval
 from arguments import (
     ModelArguments,
     DataTrainingArguments,
 )
 
-
+device = "cuda:0"
 logger = logging.getLogger(__name__)
 
 
 def main():
     # 가능한 arguments 들은 ./arguments.py 나 transformer package 안의 src/transformers/training_args.py 에서 확인 가능합니다.
     # --help flag 를 실행시켜서 확인할 수 도 있습니다.
-
+    print("we are at the train now!###################################################")
     parser = HfArgumentParser(
         (ModelArguments, DataTrainingArguments, TrainingArguments)
     )
@@ -45,15 +43,17 @@ def main():
     # [참고] argument를 manual하게 수정하고 싶은 경우에 아래와 같은 방식을 사용할 수 있습니다
     # training_args.per_device_train_batch_size = 4
     # print(training_args.per_device_train_batch_size)
-    training_args.num_train_epochs = 10
+    training_args.num_train_epochs = 5
     training_args.save_steps = 500
     training_args.save_total_limit = 2
-    # training_args.eval_steps = 500
-    training_args.logging_steps = 500
-
+    training_args.eval_steps = 500
+    training_args.evaluation_strategy = "epoch"
+    training_args.logging_steps = 100
+    training_args.learning_rate = 5e-6
+    training_args.lr_scheduler_type = "cosine_with_restarts"
     print(f"model is from {model_args.model_name_or_path}")
     print(f"data is from {data_args.dataset_name}")
-
+    print(f"we are planning to do eval on {training_args.evaluation_strategy}")
     # logging 설정
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s -    %(message)s",
@@ -75,24 +75,20 @@ def main():
     config = AutoConfig.from_pretrained(
         model_args.config_name
         if model_args.config_name is not None
-        else model_args.model_name_or_path,
+        else "Doohae/roberta",
     )
     tokenizer = AutoTokenizer.from_pretrained(
         model_args.tokenizer_name
         if model_args.tokenizer_name is not None
-        else model_args.model_name_or_path,
+        else "Doohae/roberta",
         # 'use_fast' argument를 True로 설정할 경우 rust로 구현된 tokenizer를 사용할 수 있습니다.
         # False로 설정할 경우 python으로 구현된 tokenizer를 사용할 수 있으며,
         # rust version이 비교적 속도가 빠릅니다.
         use_fast=True,
     )
 
-    model = AutoModelForQuestionAnswering.from_pretrained(
-        model_args.model_name_or_path,
-        #### from_tf가 문제인 것일까 ####
-        from_tf=bool(".ckpt" in model_args.model_name_or_path),
-        config=config,
-    )
+    
+    model = ConvQAModel("Doohae/roberta",config=config)
 
 
     print(
@@ -102,12 +98,7 @@ def main():
         type(tokenizer),
         type(model),
     )
-    #===========================================================================================
-    if data_args.train_retrieval:
-        retriever = DenseRetrieval(       
-        )
-        retriever.train()
-    #===========================================================================================
+    
     # do_train mrc model 혹은 do_eval mrc model
     if training_args.do_train or training_args.do_eval:
         run_mrc(data_args, training_args, model_args, datasets, tokenizer, model)
@@ -370,8 +361,14 @@ def run_mrc(
     # Evaluation
     if training_args.do_eval:
         logger.info("*** Evaluate ***")
+        if last_checkpoint is not None:
+            checkpoint = last_checkpoint
+        elif os.path.isdir(model_args.model_name_or_path):
+            checkpoint = model_args.model_name_or_path
+        else:
+            checkpoint = None
         metrics = trainer.evaluate()
-
+        #resume_from_checkpoint=checkpoint
         metrics["eval_samples"] = len(eval_dataset)
 
         trainer.log_metrics("eval", metrics)

@@ -112,6 +112,7 @@ class TrainingArguments:
             "help": "Number of epochs for training"
         },
     )
+
     save_total_limit: int = field(
         default=2,
         metadata={
@@ -142,3 +143,8 @@ class TrainingArguments:
             "help": "The evaluation strategy to adopt during training"
         },
     )
+
+    use_elastic: bool = field(
+        default=False, metadata={"help": "Whether to use elastic search"}
+    )
+

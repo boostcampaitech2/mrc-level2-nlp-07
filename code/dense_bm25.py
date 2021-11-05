@@ -57,39 +57,9 @@ class DenseRetrieval:
         self.mode = mode
         print(f"Mode : {self.mode}")
         self.p_with_neg = None
-        if self.mode == "train":
-            self.prepare_bm25()
+        # if self.mode == "train":
+        #     self.prepare_bm25()
         self.prepare_in_batch_negative(num_neg=num_neg)
-
-    def prepare_bm25(self, dataset=None, model_name="monologg/koelectra-base-v3-discriminator"):
-        if dataset is None:
-            dataset = self.dataset
-        
-        contexts = list(set([example for example in dataset["context"]]))
-        print("Tokenizing & Creating BM25 started!")
-        preprocessed_contexts = [preprocess_retrieval(corpus) for corpus in tqdm(contexts)]
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        tokenized_wiki = [tokenizer.tokenize(corpus) for corpus in tqdm(preprocessed_contexts)]
-        bm25 = BM25Okapi(tqdm(tokenized_wiki))
-
-        self.p_with_neg = []
-        print("Negative Samples...")
-        for c in tqdm(dataset['context']):
-            tokenized = tokenizer.tokenize(preprocess_retrieval(c))
-            results = bm25.get_scores(tokenized)
-            sorted_result = np.argsort(results)[::-1]
-            doc_indices = sorted_result.tolist()
-
-            self.p_with_neg.append(c)
-            addition = []
-            for idx in doc_indices:
-                if c != dataset['context'][idx] and dataset['context'][idx] not in addition:
-                    addition.append(dataset['context'][idx])
-                if len(addition) == self.num_neg:
-                    self.p_with_neg.extend(addition)
-                    break
-        print(f"Total Length : {len(self.p_with_neg)}")
-        print(f"Total Positive Passages : {len(self.p_with_neg)//(self.num_neg)+1}")
 
     def prepare_in_batch_negative(self,
         dataset=None,
@@ -103,16 +73,37 @@ class DenseRetrieval:
         if tokenizer is None:
             tokenizer = self.tokenizer
 
-        # prepare_bm25를 통해 만든 p_with_neg 불러오기
+        # 1. In-Batch-Negative 만들기 (gold negative + hard negative)
+        # CORPUS를 np.array로 변환해줍니다.
         if self.mode == 'train':
-            p_with_neg = self.p_with_neg
-                
+            corpus = np.array(list(set([example for example in dataset["context"]])))
+            p_with_neg = []
+
+            for idx, c in enumerate(dataset["context"]):
+                while True:
+                    neg_idxs = np.random.randint(len(corpus), size=num_neg)  # gold 방식!
+                    hard_neg_idx = random.randint(0, len(eval(dataset.loc[idx]["all_hard_neg"]))-1)  # hard 1 random 추출
+
+                    if not c in corpus[neg_idxs]:
+                        p_neg = corpus[neg_idxs]
+
+                        p_with_neg.append(c)
+                        hard_neg = eval(dataset.loc[idx]["all_hard_neg"])[hard_neg_idx]
+                        p_with_neg.append(hard_neg)
+                        p_with_neg.extend(p_neg)
+                        break
+            
+            questions = dataset["question"].tolist()
+            contexts = dataset['context'].tolist()
         else:
             p_with_neg = dataset['context']
+            contexts = dataset['context']
+            questions = dataset["question"]
+
 
         # 2. (Question, Passage) 데이터셋 만들어주기
         q_seqs = tokenizer(
-            dataset["question"],
+            questions,
             padding="max_length",
             truncation=True,
             return_tensors="pt"
@@ -126,9 +117,9 @@ class DenseRetrieval:
 
         max_len = p_seqs["input_ids"].size(-1)
         if self.mode == 'train':
-            p_seqs["input_ids"] = p_seqs["input_ids"].view(-1, num_neg+1, max_len)
-            p_seqs["attention_mask"] = p_seqs["attention_mask"].view(-1, num_neg+1, max_len)
-            p_seqs["token_type_ids"] = p_seqs["token_type_ids"].view(-1, num_neg+1, max_len)
+            p_seqs["input_ids"] = p_seqs["input_ids"].view(-1, num_neg+2, max_len)  # ground_truth + num_neg + hard_neg => num_neg+2
+            p_seqs["attention_mask"] = p_seqs["attention_mask"].view(-1, num_neg+2, max_len)
+            p_seqs["token_type_ids"] = p_seqs["token_type_ids"].view(-1, num_neg+2, max_len)
         else:
             p_seqs["input_ids"] = p_seqs["input_ids"].view(-1, 1, max_len)
             p_seqs["attention_mask"] = p_seqs["attention_mask"].view(-1, 1, max_len)
@@ -146,7 +137,7 @@ class DenseRetrieval:
         )
 
         valid_seqs = tokenizer(
-            dataset["context"],
+            contexts,
             padding="max_length",
             truncation=True,
             return_tensors="pt"
@@ -209,9 +200,9 @@ class DenseRetrieval:
                     targets = targets.to(args.device)
 
                     p_inputs = {
-                        "input_ids": batch[0].view(batch_size * (self.num_neg + 1), -1).to(args.device),
-                        "attention_mask": batch[1].view(batch_size * (self.num_neg + 1), -1).to(args.device),
-                        "token_type_ids": batch[2].view(batch_size * (self.num_neg + 1), -1).to(args.device)
+                        "input_ids": batch[0].view(batch_size * (self.num_neg + 2), -1).to(args.device),
+                        "attention_mask": batch[1].view(batch_size * (self.num_neg + 2), -1).to(args.device),
+                        "token_type_ids": batch[2].view(batch_size * (self.num_neg + 2), -1).to(args.device)
                     }
             
                     q_inputs = {
@@ -226,7 +217,7 @@ class DenseRetrieval:
                     q_outputs = self.q_encoder(**q_inputs)
 
                     # Calculate similarity score & loss
-                    p_outputs = torch.transpose(p_outputs.view(batch_size, self.num_neg+1, -1), 1, 2)
+                    p_outputs = torch.transpose(p_outputs.view(batch_size, self.num_neg+2, -1), 1, 2)
                     q_outputs = q_outputs.view(batch_size, 1, -1)
 
                     sim_scores = torch.bmm(q_outputs, p_outputs).squeeze()  #(batch_size, num_neg + 1)
@@ -252,7 +243,7 @@ class DenseRetrieval:
 
     def get_relevant_doc(self,
         query,
-        k=1,
+        k=10,
         args=None,
         p_encoder=None,
         q_encoder=None
@@ -342,15 +333,22 @@ def main(arg):
     print ("device:[%s]."%(device))
     
     data_path = "../data/"
-    train_path = "train_dataset/"
-    
+
+    output_path = "./dense_encoder/" + arg.output_dir
+    if not os.path.exists(output_path):
+        os.mkdir(output_path)
+
     assert arg.mode.lower()=="train" or arg.mode.lower()=="eval", "Set Retrieval Mode : [train] or [eval]"
     
     if arg.mode.lower() == "train":
-        train_dataset = load_from_disk(data_path + train_path)["train"]
+        # train_path = "gen_wiki"  # GPT-2 생성 데이터
+        # train_dataset = load_from_disk(data_path + train_path)["train"]  # 원 training set
+        train_path = "negative_samples_all.csv"
+        train_dataset = pd.read_csv(data_path + train_path, engine="python")
+
 
         args = TrainingArguments(
-            output_dir=os.path.join(data_path, arg.output_dir),
+            output_dir=output_path,
             evaluation_strategy="epoch",
             learning_rate=arg.learning_rate,
             per_device_train_batch_size=arg.batch_size,
@@ -374,8 +372,8 @@ def main(arg):
         )
         retriever.train()
         
-        torch.save(p_encoder, os.path.join(data_path, 'p_encoder.pt'))
-        torch.save(q_encoder, os.path.join(data_path, 'q_encoder.pt'))
+        torch.save(p_encoder, os.path.join(output_path, 'p_encoder.pt'))
+        torch.save(q_encoder, os.path.join(output_path, 'q_encoder.pt'))
         print("Models Saved!")
         
         for i in range(5):
@@ -390,24 +388,23 @@ def main(arg):
                 pprint(retriever.dataset["context"][idx]) 
             
     elif arg.mode.lower() == "eval":
+        train_path = "train_dataset/"  # eval 시
         test_dataset = load_from_disk(data_path + train_path)["validation"]
         
-        assert os.path.exists(os.path.join(data_path, 'p_encoder.pt')) and os.path.exists(os.path.join(data_path, 'q_encoder.pt')), "Train and Load Models First!!"
-        p_encoder = torch.load(os.path.join(data_path, 'p_encoder.pt')).to(device)
-        q_encoder = torch.load(os.path.join(data_path, 'q_encoder.pt')).to(device)
-        # p_encoder.to(device)
-        # q_encoder.to(device)
+        assert os.path.exists(os.path.join(output_path, 'p_encoder.pt')) and os.path.exists(os.path.join(output_path, 'q_encoder.pt')), "Train and Load Models First!!"
+        p_encoder = torch.load(os.path.join(output_path, 'p_encoder.pt')).to(device)
+        q_encoder = torch.load(os.path.join(output_path, 'q_encoder.pt')).to(device)
         p_encoder.eval()
         q_encoder.eval()
         
         args = TrainingArguments(
-            output_dir=os.path.join(data_path, arg.output_dir),
+            output_dir=os.path.join(output_path),
             evaluation_strategy="epoch",
             learning_rate=arg.learning_rate,
-            per_device_train_batch_size=1,
-            per_device_eval_batch_size=1,
-            # per_device_train_batch_size=arg.batch_size,
-            # per_device_eval_batch_size=arg.batch_size,
+            # per_device_train_batch_size=1,
+            # per_device_eval_batch_size=1,
+            per_device_train_batch_size=arg.batch_size,
+            per_device_eval_batch_size=arg.batch_size,
             num_train_epochs=arg.epoch,
             weight_decay=0.01
         )
@@ -425,25 +422,36 @@ def main(arg):
         )
         
         print(f"Num Evaluation : {len(test_dataset)}")
-        right, wrong = 0, 0
-        for i in tqdm(range(len(test_dataset))):
+        right_wrong = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+        k_lst = [1, 3, 5, 7, 9, 10, 15, 20]
+        for i in tqdm(range(len(test_dataset['question']))):
             query = test_dataset['question'][i]
-            print(query)
-            print(test_dataset['context'][i])
-            results = retriever.get_relevant_doc(query=query, k=arg.topk)
-            indices = results.tolist()
+            if i % 50 == 0:
+                print(query)
+                print(test_dataset['context'][i])
+            _, indices = retriever.get_relevant_doc(query=query, k=arg.topk)
             predict = []
             for k, idx in enumerate(indices):
-                predict.append(retriever.dataset["context"][idx])
-                print("-"*100)
-                print(f"Top-{k+1} predict")
-                print(retriever.dataset["context"][idx])
-            if test_dataset['context'][i] in predict:
-                right += 1
-            else:
-                wrong += 1
+                predict.append(retriever.contexts[idx])
+                if i % 50 == 0:
+                    print("-"*100)
+                    print(f"Top-{k+1} predict")
+                    print(retriever.contexts[idx])
+
+            for k_idx in range(len(k_lst)):
+                k = k_lst[k_idx]
+                if test_dataset['context'][i] in predict[:k]:
+                # if test_dataset['context'].tolist()[i] in predict:  # GPT-2 generated data
+                    right_wrong[k_idx][0] += 1  # right
+                else:
+                    right_wrong[k_idx][1] += 1  # wrong
             
-        print(f"Top-{arg.topk} Acc. : {100*right/(right+wrong):.2f}%")            
+        print(output_path)
+        for k_idx in range(len(k_lst)):
+            right = right_wrong[k_idx][0]
+            total = sum(right_wrong[k_idx])
+            score = 100 * right / total
+            print(f"Top-{k_lst[k_idx]} Acc. : {score:.2f}%")               
             
                 
 if __name__ == "__main__":

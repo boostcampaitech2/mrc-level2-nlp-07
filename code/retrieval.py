@@ -9,7 +9,8 @@ import pandas as pd
 from tqdm.auto import tqdm
 from contextlib import contextmanager
 from typing import List, Tuple, NoReturn, Any, Optional, Union
-
+from elasticsearch import Elasticsearch
+from preprocess import preprocess_retrieval
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from datasets import (
@@ -95,6 +96,8 @@ class SparseRetrieval:
 
         self.p_embedding = None  # get_sparse_embedding()로 생성합니다
         self.indexer = None  # build_faiss()로 생성합니다.
+        self.es = None  # build_elastic()으로 생성합니다. 
+        self.INDEX_NAME = None # build_elastic()으로 생성합니다.
 
     def get_sparse_embedding(self) -> NoReturn:
 
@@ -406,6 +409,180 @@ class SparseRetrieval:
         D, I = self.indexer.search(q_embs, k)
 
         return D.tolist(), I.tolist()
+
+    def build_elastic(self) -> NoReturn:
+        """
+        Summary:
+            데이터를 매핑하고, 엘라스틱 서치를 연결한 후 indice를 생성하고 index에 데이터를 추가합니다.
+
+        Note:
+            깃에서 설치 코드를 실행시켜야 제대로 작동합니다. 
+        """
+
+        os.system("service elasticsearch start")
+        self.INDEX_NAME = "document_index"
+
+        INDEX_SETTINGS = {
+        "settings" : {
+            "index":{
+                "analysis":{
+                    "analyzer":{
+                        "korean":{
+                            "type":"custom",
+                            "tokenizer":"nori_tokenizer",
+                            "filter": [ "shingle" ],
+                        }
+                    },
+                }
+            }
+        },
+        "mappings": {
+            "properties" : {
+                "context" : {
+                    "type" : "text",
+                    "analyzer": "korean",
+                    "search_analyzer": "korean",
+                    }
+                }
+            }
+        }
+
+        docs = {}
+        for i, context in enumerate(self.contexts):
+            context = context.replace('~', '에서')
+            docs[i] = {'context': context}
+        
+        es = Elasticsearch(timeout=30, max_retries=10, retry_in_timeout=True)
+        if es.indices.exists(self.INDEX_NAME):
+           pass
+        else: 
+            es.indices.create(index=self.INDEX_NAME, body=INDEX_SETTINGS)
+
+        for id, doc in docs.items():
+            if '%' in doc:
+                print(id, doc)
+            es.index(index=self.INDEX_NAME, id=id, body=doc)
+        self.es = es 
+
+    def retrieve_elastic(
+        self, query_or_dataset: Union[str, Dataset], topk: Optional[int] = 1
+    ) -> Union[Tuple[List, List], pd.DataFrame]:
+    
+        """
+        Arguments:
+                query_or_dataset (Union[str, Dataset]):
+                    str이나 Dataset으로 이루어진 Query를 받습니다.
+                    str 형태인 하나의 query만 받으면 `get_relevant_doc`을 통해 유사도를 구합니다.
+                    Dataset 형태는 query를 포함한 HF.Dataset을 받습니다.
+                    이 경우 `get_relevant_doc_bulk`를 통해 유사도를 구합니다.
+                topk (Optional[int], optional): Defaults to 1.
+                    상위 몇 개의 passage를 사용할 것인지 지정합니다.
+
+            Returns:
+                1개의 Query를 받는 경우  -> Tuple(List, List)
+                다수의 Query를 받는 경우 -> pd.DataFrame: [description]
+
+            Note:
+                다수의 Query를 받는 경우,
+                    Ground Truth가 있는 Query (train/valid) -> 기존 Ground Truth Passage를 같이 반환합니다.
+                    Ground Truth가 없는 Query (test) -> Retrieval한 Passage만 반환합니다.
+                retrieve와 같은 기능을 하지만 elastic search를 사용합니다.
+        """
+
+        assert self.es is not None, "build_elastic()를 먼저 수행해주세요."
+
+        if isinstance(query_or_dataset, str):
+            doc_scores, doc_indices = self.get_relevant_doc_elastic(
+                query_or_dataset, k=topk
+            )
+            print("[Search query]\n", query_or_dataset, "\n")
+
+            for i in range(topk):
+                print("Top-%d passage with score %.4f" % (i + 1, doc_scores[i]))
+                print(self.contexts[doc_indices[i]], "\n")
+
+            return (doc_scores, [self.contexts[doc_indices[i]] for i in range(topk)])
+
+        elif isinstance(query_or_dataset, Dataset):
+
+            # Retrieve한 Passage를 pd.DataFrame으로 반환합니다.
+            queries = query_or_dataset["question"]
+            total = []
+
+            with timer("query elastic search"):
+                doc_scores, doc_indices = self.get_relevant_doc_bulk_elastic(
+                    queries, k=topk
+                )
+            for idx, example in enumerate(
+                tqdm(query_or_dataset, desc="Elastic retrieval: ")
+            ):
+                tmp = {
+                    # Query와 해당 id를 반환합니다.
+                    "question": example["question"],
+                    "id": example["id"],
+                    # Retrieve한 Passage의 id, context를 반환합니다.
+                    "context_id": doc_indices[idx],
+                    "context": " ".join(
+                        [preprocess_retrieval(self.contexts[pid]) for pid in doc_indices[idx]]
+                    ),
+                }
+                if "context" in example.keys() and "answers" in example.keys():
+                    # validation 데이터를 사용하면 ground_truth context와 answer도 반환합니다.
+                    tmp["original_context"] = example["context"]
+                    tmp["answers"] = example["answers"]
+                total.append(tmp)
+
+            return pd.DataFrame(total)
+
+    def get_relevant_doc_elastic(self, query: str, k: Optional[int] = 1) -> Tuple[List, List]:
+
+        """
+        Arguments:
+            query (str):
+                하나의 Query를 받습니다.
+            k (Optional[int]): 1
+                상위 몇 개의 Passage를 반환할지 정합니다.
+        """
+        if '~' in query:
+            query = query.replace('~', '에서 ')
+        with timer("query elastic search"):
+            result = self.es.search(index=self.INDEX_NAME, q=query, size=k)
+
+        doc_score, doc_indices = [], []
+        for hit in result['hits']['hits']:
+            doc_score.append(hit['_score'])
+            doc_indices.append(int(hit['_id']))
+        
+        return doc_score, doc_indices
+
+    def get_relevant_doc_bulk_elastic(
+        self, queries: List, k: Optional[int] = 1
+    ) -> Tuple[List, List]:
+
+        """
+        Arguments:
+            queries (List):
+                하나의 Query를 받습니다.
+            k (Optional[int]): 1
+                상위 몇 개의 Passage를 반환할지 정합니다.
+        """
+        results = []
+        with timer("query elastic search"):
+            for query in queries:
+                if '~' in query:
+                    query = query.replace('~', '에서 ')
+                results.append(self.es.search(index=self.INDEX_NAME, q=query, size=k))
+
+        doc_score, doc_indices = [], []
+        for result in results:
+            temp_score, temp_indices = [], []
+            for hit in result['hits']['hits']:
+                temp_score.append(hit['_score'])
+                temp_indices.append(int(hit['_id']))
+            doc_score.append(temp_score)
+            doc_indices.append(temp_indices)
+
+        return doc_score, doc_indices
 
 
 if __name__ == "__main__":

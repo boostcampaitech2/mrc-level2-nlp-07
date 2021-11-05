@@ -21,9 +21,7 @@ import json
 import logging
 import os
 from typing import Optional, Tuple, Any
-
 from sklearn.preprocessing import MinMaxScaler
-
 import numpy as np
 from tqdm.auto import tqdm
 
@@ -105,9 +103,7 @@ def postprocess_qa_predictions(
     assert (
         len(predictions) == 2
     ), "`predictions` should be a tuple with two elements (start_logits, end_logits)."
-
     scaler = MinMaxScaler()  # 정규화
-
     all_start_logits, all_end_logits = predictions
 
     assert len(predictions[0]) == len(
@@ -144,7 +140,6 @@ def postprocess_qa_predictions(
         for feature_index in feature_indices:
             # 각 featureure에 대한 모든 prediction을 가져옵니다.
             start_logits = all_start_logits[feature_index]
-
             norm_start_logits = np.array(start_logits).reshape(-1, 1)
             norm_start_logits = scaler.fit_transform(norm_start_logits).flatten().tolist()  # start_logits 정규화
 
@@ -215,12 +210,10 @@ def postprocess_qa_predictions(
                             if start >= example['doc_offsets'][index]:
                                 doc_num = index
                     
-
                     # original_score = start_logits[start_index] + end_logits[end_index]
                     original_score = norm_start_logits[start_index] + norm_end_logits[end_index]
                     score = (1-serini_ratio) * example['doc_scores'][doc_num] \
                         + serini_ratio * original_score
-
                     prelim_predictions.append(
                         {
                             "offsets": (

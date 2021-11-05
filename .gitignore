@@ -11,3 +11,4 @@ cache-*
 *.log
 *.wandb
 *.yaml
+**/wandb

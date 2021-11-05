@@ -1,5 +1,4 @@
-# Boostcamp Machine Reading Comprehension   
-# (Open Domain Question Answering) Competition
+# Boostcamp Machine Reading Comprehension Competition
 ## **Table of contents**
 
 1. [Introduction](#introduction)

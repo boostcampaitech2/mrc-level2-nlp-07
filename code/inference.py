@@ -1,14 +1,13 @@
 """
 Open-Domain Question Answering 을 수행하는 inference 코드 입니다.
-
 대부분의 로직은 train.py 와 비슷하나 retrieval, predict 부분이 추가되어 있습니다.
 """
 
-
+import gc
 import logging
 import sys
 from typing import Callable, List, Dict, NoReturn, Tuple
-
+from modelcustom import QAWithLSTMModel
 import numpy as np
 
 from datasets import (
@@ -21,7 +20,7 @@ from datasets import (
     DatasetDict,
 )
 
-from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
+from transformers import AutoModel,AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer,AutoModelForMaskedLM
 
 from transformers import (
     DataCollatorWithPadding,
@@ -33,13 +32,19 @@ from transformers import (
 
 from utils_qa import postprocess_qa_predictions, check_no_error
 from trainer_qa import QuestionAnsweringTrainer
-from retrieval import SparseRetrieval
+# from retrieval import SparseRetrieval
+from golden_retriever import DenseRetrieval, BertEncoder
 
 from arguments import (
     ModelArguments,
     DataTrainingArguments,
 )
 
+import torch
+import os
+import pickle
+
+TOKENIZER = AutoTokenizer.from_pretrained("klue/bert-base")
 
 logger = logging.getLogger(__name__)
 
@@ -79,24 +84,27 @@ def main():
     config = AutoConfig.from_pretrained(
         model_args.config_name
         if model_args.config_name
-        else model_args.model_name_or_path,
+        else "/opt/ml/mrc-level2-nlp-07/code/models/klue/roberta",
     )
     tokenizer = AutoTokenizer.from_pretrained(
         model_args.tokenizer_name
         if model_args.tokenizer_name
-        else model_args.model_name_or_path,
+        else "/opt/ml/mrc-level2-nlp-07/code/models/klue/roberta",
         use_fast=True,
     )
     model = AutoModelForQuestionAnswering.from_pretrained(
-        model_args.model_name_or_path,
+        "/opt/ml/mrc-level2-nlp-07/code/models/klue/roberta",
         from_tf=bool(".ckpt" in model_args.model_name_or_path),
         config=config,
     )
+    
+
 
     # True일 경우 : run passage retrieval
     if data_args.eval_retrieval:
-        datasets = run_sparse_retrieval(
-            tokenizer.tokenize,
+        datasets = run_golden_retrieval(
+            #### 이 부분 수정함 ####
+            TOKENIZER,
             datasets,
             training_args,
             data_args,
@@ -107,7 +115,7 @@ def main():
         run_mrc(data_args, training_args, model_args, datasets, tokenizer, model)
 
 
-def run_sparse_retrieval(
+def run_golden_retrieval(
     tokenize_fn: Callable[[str], List[str]],
     datasets: DatasetDict,
     training_args: TrainingArguments,
@@ -115,17 +123,30 @@ def run_sparse_retrieval(
     data_path: str = "../data",
     context_path: str = "wikipedia_documents.json",
 ) -> DatasetDict:
+    output_path = "./dense_encoder/dense_retrieval_allhard_20/"
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    p_encoder = torch.load(os.path.join(output_path, 'p_encoder.pt')).to(device)
+    q_encoder = torch.load(os.path.join(output_path, 'q_encoder.pt')).to(device)
+
+    args = TrainingArguments(
+            output_dir=os.path.join(output_path),
+            evaluation_strategy="epoch",
+            learning_rate=None,
+            per_device_train_batch_size=4,
+            per_device_eval_batch_size=4,
+            num_train_epochs=None,
+            weight_decay=0.01
+        )
 
     # Query에 맞는 Passage들을 Retrieval 합니다.
-    retriever = SparseRetrieval(
-        tokenize_fn=tokenize_fn, data_path=data_path, context_path=context_path
-    )
-    retriever.get_sparse_embedding()
-
-    if data_args.use_faiss:
-        retriever.build_faiss(num_clusters=data_args.num_clusters)
-        df = retriever.retrieve_faiss(
-            datasets["validation"], topk=data_args.top_k_retrieval
+    retriever = DenseRetrieval(
+        args=args,
+        dataset=datasets,
+        num_neg=None,
+        tokenizer=tokenize_fn,
+        p_encoder=p_encoder,
+        q_encoder=q_encoder,
+        mode="eval",
         )
     elif data_args.use_elastic:
         retriever.build_elastic()
@@ -203,7 +224,7 @@ def run_mrc(
             stride=data_args.doc_stride,
             return_overflowing_tokens=True,
             return_offsets_mapping=True,
-            #return_token_type_ids=False, # roberta모델을 사용할 경우 False, bert를 사용할 경우 True로 표기해야합니다.
+            return_token_type_ids=False, # roberta모델을 사용할 경우 False, bert를 사용할 경우 True로 표기해야합니다.
             padding="max_length" if data_args.pad_to_max_length else False,
         )
 
@@ -263,6 +284,7 @@ def run_mrc(
             max_answer_length=data_args.max_answer_length,
             output_dir=training_args.output_dir,
         )
+
         # Metric을 구할 수 있도록 Format을 맞춰줍니다.
         formatted_predictions = [
             {"id": k, "prediction_text": v} for k, v in predictions.items()
@@ -284,9 +306,10 @@ def run_mrc(
 
     def compute_metrics(p: EvalPrediction) -> Dict:
         return metric.compute(predictions=p.predictions, references=p.label_ids)
-
+    torch.cuda.empty_cache()
     print("init trainer...")
     # Trainer 초기화
+    
     trainer = QuestionAnsweringTrainer(
         model=model,
         args=training_args,

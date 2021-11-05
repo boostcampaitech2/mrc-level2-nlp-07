@@ -1,0 +1,148 @@
+2021-10-29 15:55:18,652 INFO    MainThread:9017 [internal.py:wandb_internal():87] W&B internal server running at pid: 9017, started at: 2021-10-29 15:55:18.652367
+2021-10-29 15:55:18,655 INFO    WriterThread:9017 [datastore.py:open_for_write():77] open: /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/run-2yb474pt.wandb
+2021-10-29 15:55:18,655 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: check_version
+2021-10-29 15:55:18,657 DEBUG   SenderThread:9017 [sender.py:send():238] send: header
+2021-10-29 15:55:18,657 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: check_version
+2021-10-29 15:55:18,746 DEBUG   SenderThread:9017 [sender.py:send():238] send: run
+2021-10-29 15:55:18,969 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: run_start
+2021-10-29 15:55:18,970 INFO    SenderThread:9017 [dir_watcher.py:__init__():169] watching files in: /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files
+2021-10-29 15:55:18,971 INFO    SenderThread:9017 [sender.py:_start_run_threads():825] run started: 2yb474pt with start time 1635522917
+2021-10-29 15:55:18,971 DEBUG   SenderThread:9017 [sender.py:send():238] send: summary
+2021-10-29 15:55:18,973 INFO    SenderThread:9017 [sender.py:_save_file():960] saving file wandb-summary.json with policy end
+2021-10-29 15:55:18,974 DEBUG   HandlerThread:9017 [meta.py:__init__():40] meta init
+2021-10-29 15:55:18,974 DEBUG   HandlerThread:9017 [meta.py:__init__():54] meta init done
+2021-10-29 15:55:18,974 DEBUG   HandlerThread:9017 [meta.py:probe():214] probe
+2021-10-29 15:55:18,981 DEBUG   HandlerThread:9017 [meta.py:_setup_git():204] setup git
+2021-10-29 15:55:19,008 DEBUG   HandlerThread:9017 [meta.py:_setup_git():211] setup git done
+2021-10-29 15:55:19,008 DEBUG   HandlerThread:9017 [meta.py:_save_pip():58] save pip
+2021-10-29 15:55:19,009 DEBUG   HandlerThread:9017 [meta.py:_save_pip():72] save pip done
+2021-10-29 15:55:19,009 DEBUG   HandlerThread:9017 [meta.py:_save_conda():79] save conda
+2021-10-29 15:55:19,970 INFO    Thread-8  :9017 [dir_watcher.py:_on_file_created():217] file/dir created: /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files/requirements.txt
+2021-10-29 15:55:19,971 INFO    Thread-8  :9017 [dir_watcher.py:_on_file_created():217] file/dir created: /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files/conda-environment.yaml
+2021-10-29 15:55:19,971 INFO    Thread-8  :9017 [dir_watcher.py:_on_file_created():217] file/dir created: /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files/wandb-summary.json
+2021-10-29 15:55:21,774 DEBUG   HandlerThread:9017 [meta.py:_save_conda():89] save conda done
+2021-10-29 15:55:21,774 DEBUG   HandlerThread:9017 [meta.py:probe():252] probe done
+2021-10-29 15:55:21,778 DEBUG   SenderThread:9017 [sender.py:send():238] send: files
+2021-10-29 15:55:21,778 INFO    SenderThread:9017 [sender.py:_save_file():960] saving file wandb-metadata.json with policy now
+2021-10-29 15:55:21,783 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: stop_status
+2021-10-29 15:55:21,784 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: stop_status
+2021-10-29 15:55:21,967 DEBUG   SenderThread:9017 [sender.py:send():238] send: config
+2021-10-29 15:55:21,968 DEBUG   SenderThread:9017 [sender.py:send():238] send: metric
+2021-10-29 15:55:21,968 DEBUG   SenderThread:9017 [sender.py:send():238] send: metric
+2021-10-29 15:55:21,968 WARNING SenderThread:9017 [sender.py:send_metric():918] Seen metric with glob (shouldnt happen)
+2021-10-29 15:55:21,970 INFO    Thread-8  :9017 [dir_watcher.py:_on_file_modified():230] file/dir modified: /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files/conda-environment.yaml
+2021-10-29 15:55:21,970 INFO    Thread-8  :9017 [dir_watcher.py:_on_file_created():217] file/dir created: /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files/output.log
+2021-10-29 15:55:21,970 INFO    Thread-8  :9017 [dir_watcher.py:_on_file_created():217] file/dir created: /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files/wandb-metadata.json
+2021-10-29 15:55:22,327 INFO    Thread-11 :9017 [upload_job.py:push():137] Uploaded file /tmp/tmpsc4dgquiwandb/lqdx2dnw-wandb-metadata.json
+2021-10-29 15:55:23,970 INFO    Thread-8  :9017 [dir_watcher.py:_on_file_modified():230] file/dir modified: /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files/output.log
+2021-10-29 15:55:24,299 DEBUG   SenderThread:9017 [sender.py:send():238] send: telemetry
+2021-10-29 15:55:24,299 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: poll_exit
+2021-10-29 15:55:24,299 DEBUG   SenderThread:9017 [sender.py:send():238] send: exit
+2021-10-29 15:55:24,300 INFO    SenderThread:9017 [sender.py:send_exit():370] handling exit code: 1
+2021-10-29 15:55:24,300 INFO    SenderThread:9017 [sender.py:send_exit():372] handling runtime: 5
+2021-10-29 15:55:24,301 INFO    SenderThread:9017 [sender.py:_save_file():960] saving file wandb-summary.json with policy end
+2021-10-29 15:55:24,301 INFO    SenderThread:9017 [sender.py:send_exit():382] send defer
+2021-10-29 15:55:24,301 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: poll_exit
+2021-10-29 15:55:24,302 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: defer
+2021-10-29 15:55:24,302 INFO    HandlerThread:9017 [handler.py:handle_request_defer():147] handle defer: 0
+2021-10-29 15:55:24,302 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: defer
+2021-10-29 15:55:24,302 INFO    SenderThread:9017 [sender.py:send_request_defer():391] handle sender defer: 0
+2021-10-29 15:55:24,302 INFO    SenderThread:9017 [sender.py:transition_state():395] send defer: 1
+2021-10-29 15:55:24,303 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: defer
+2021-10-29 15:55:24,303 INFO    HandlerThread:9017 [handler.py:handle_request_defer():147] handle defer: 1
+2021-10-29 15:55:24,315 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: defer
+2021-10-29 15:55:24,315 INFO    SenderThread:9017 [sender.py:send_request_defer():391] handle sender defer: 1
+2021-10-29 15:55:24,315 INFO    SenderThread:9017 [sender.py:transition_state():395] send defer: 2
+2021-10-29 15:55:24,315 DEBUG   SenderThread:9017 [sender.py:send():238] send: stats
+2021-10-29 15:55:24,316 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: defer
+2021-10-29 15:55:24,316 INFO    HandlerThread:9017 [handler.py:handle_request_defer():147] handle defer: 2
+2021-10-29 15:55:24,316 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: defer
+2021-10-29 15:55:24,316 INFO    SenderThread:9017 [sender.py:send_request_defer():391] handle sender defer: 2
+2021-10-29 15:55:24,316 INFO    SenderThread:9017 [sender.py:transition_state():395] send defer: 3
+2021-10-29 15:55:24,317 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: defer
+2021-10-29 15:55:24,317 INFO    HandlerThread:9017 [handler.py:handle_request_defer():147] handle defer: 3
+2021-10-29 15:55:24,317 DEBUG   SenderThread:9017 [sender.py:send():238] send: summary
+2021-10-29 15:55:24,318 INFO    SenderThread:9017 [sender.py:_save_file():960] saving file wandb-summary.json with policy end
+2021-10-29 15:55:24,318 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: defer
+2021-10-29 15:55:24,318 INFO    SenderThread:9017 [sender.py:send_request_defer():391] handle sender defer: 3
+2021-10-29 15:55:24,318 INFO    SenderThread:9017 [sender.py:transition_state():395] send defer: 4
+2021-10-29 15:55:24,319 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: defer
+2021-10-29 15:55:24,319 INFO    HandlerThread:9017 [handler.py:handle_request_defer():147] handle defer: 4
+2021-10-29 15:55:24,319 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: defer
+2021-10-29 15:55:24,319 INFO    SenderThread:9017 [sender.py:send_request_defer():391] handle sender defer: 4
+2021-10-29 15:55:24,403 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: poll_exit
+2021-10-29 15:55:24,560 INFO    SenderThread:9017 [sender.py:transition_state():395] send defer: 5
+2021-10-29 15:55:24,560 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: poll_exit
+2021-10-29 15:55:24,561 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: defer
+2021-10-29 15:55:24,561 INFO    HandlerThread:9017 [handler.py:handle_request_defer():147] handle defer: 5
+2021-10-29 15:55:24,561 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: defer
+2021-10-29 15:55:24,561 INFO    SenderThread:9017 [sender.py:send_request_defer():391] handle sender defer: 5
+2021-10-29 15:55:24,561 INFO    SenderThread:9017 [dir_watcher.py:finish():283] shutting down directory watcher
+2021-10-29 15:55:24,662 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: poll_exit
+2021-10-29 15:55:24,971 INFO    Thread-8  :9017 [dir_watcher.py:_on_file_modified():230] file/dir modified: /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files/output.log
+2021-10-29 15:55:24,971 INFO    SenderThread:9017 [dir_watcher.py:_on_file_modified():230] file/dir modified: /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files/config.yaml
+2021-10-29 15:55:24,972 INFO    SenderThread:9017 [dir_watcher.py:_on_file_modified():230] file/dir modified: /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files/wandb-summary.json
+2021-10-29 15:55:24,972 INFO    SenderThread:9017 [dir_watcher.py:finish():313] scan: /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files
+2021-10-29 15:55:24,972 INFO    SenderThread:9017 [dir_watcher.py:finish():327] scan save: /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files/conda-environment.yaml conda-environment.yaml
+2021-10-29 15:55:24,972 INFO    SenderThread:9017 [dir_watcher.py:finish():327] scan save: /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files/output.log output.log
+2021-10-29 15:55:24,972 INFO    SenderThread:9017 [dir_watcher.py:finish():327] scan save: /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files/config.yaml config.yaml
+2021-10-29 15:55:24,973 INFO    SenderThread:9017 [dir_watcher.py:finish():327] scan save: /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files/wandb-metadata.json wandb-metadata.json
+2021-10-29 15:55:24,976 INFO    SenderThread:9017 [dir_watcher.py:finish():327] scan save: /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files/wandb-summary.json wandb-summary.json
+2021-10-29 15:55:24,979 INFO    SenderThread:9017 [dir_watcher.py:finish():327] scan save: /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files/requirements.txt requirements.txt
+2021-10-29 15:55:24,981 INFO    SenderThread:9017 [sender.py:transition_state():395] send defer: 6
+2021-10-29 15:55:24,982 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: poll_exit
+2021-10-29 15:55:24,986 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: defer
+2021-10-29 15:55:24,986 INFO    HandlerThread:9017 [handler.py:handle_request_defer():147] handle defer: 6
+2021-10-29 15:55:24,986 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: defer
+2021-10-29 15:55:24,986 INFO    SenderThread:9017 [sender.py:send_request_defer():391] handle sender defer: 6
+2021-10-29 15:55:24,987 INFO    SenderThread:9017 [file_pusher.py:finish():177] shutting down file pusher
+2021-10-29 15:55:25,087 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: poll_exit
+2021-10-29 15:55:25,087 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: poll_exit
+2021-10-29 15:55:25,190 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: poll_exit
+2021-10-29 15:55:25,191 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: poll_exit
+2021-10-29 15:55:25,297 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: poll_exit
+2021-10-29 15:55:25,298 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: poll_exit
+2021-10-29 15:55:25,399 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: poll_exit
+2021-10-29 15:55:25,400 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: poll_exit
+2021-10-29 15:55:25,501 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: poll_exit
+2021-10-29 15:55:25,501 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: poll_exit
+2021-10-29 15:55:25,536 INFO    Thread-13 :9017 [upload_job.py:push():137] Uploaded file /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files/output.log
+2021-10-29 15:55:25,543 INFO    Thread-12 :9017 [upload_job.py:push():137] Uploaded file /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files/conda-environment.yaml
+2021-10-29 15:55:25,548 INFO    Thread-14 :9017 [upload_job.py:push():137] Uploaded file /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files/config.yaml
+2021-10-29 15:55:25,552 INFO    Thread-16 :9017 [upload_job.py:push():137] Uploaded file /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files/requirements.txt
+2021-10-29 15:55:25,562 INFO    Thread-15 :9017 [upload_job.py:push():137] Uploaded file /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/files/wandb-summary.json
+2021-10-29 15:55:25,603 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: poll_exit
+2021-10-29 15:55:25,603 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: poll_exit
+2021-10-29 15:55:25,704 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: poll_exit
+2021-10-29 15:55:25,705 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: poll_exit
+2021-10-29 15:55:25,763 INFO    Thread-7  :9017 [sender.py:transition_state():395] send defer: 7
+2021-10-29 15:55:25,763 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: defer
+2021-10-29 15:55:25,763 INFO    HandlerThread:9017 [handler.py:handle_request_defer():147] handle defer: 7
+2021-10-29 15:55:25,764 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: defer
+2021-10-29 15:55:25,764 INFO    SenderThread:9017 [sender.py:send_request_defer():391] handle sender defer: 7
+2021-10-29 15:55:25,806 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: poll_exit
+2021-10-29 15:55:26,144 INFO    SenderThread:9017 [sender.py:transition_state():395] send defer: 8
+2021-10-29 15:55:26,144 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: poll_exit
+2021-10-29 15:55:26,145 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: defer
+2021-10-29 15:55:26,145 INFO    HandlerThread:9017 [handler.py:handle_request_defer():147] handle defer: 8
+2021-10-29 15:55:26,145 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: defer
+2021-10-29 15:55:26,145 INFO    SenderThread:9017 [sender.py:send_request_defer():391] handle sender defer: 8
+2021-10-29 15:55:26,145 INFO    SenderThread:9017 [sender.py:transition_state():395] send defer: 9
+2021-10-29 15:55:26,146 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: defer
+2021-10-29 15:55:26,146 DEBUG   SenderThread:9017 [sender.py:send():238] send: final
+2021-10-29 15:55:26,146 INFO    HandlerThread:9017 [handler.py:handle_request_defer():147] handle defer: 9
+2021-10-29 15:55:26,146 DEBUG   SenderThread:9017 [sender.py:send():238] send: footer
+2021-10-29 15:55:26,146 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: defer
+2021-10-29 15:55:26,146 INFO    SenderThread:9017 [sender.py:send_request_defer():391] handle sender defer: 9
+2021-10-29 15:55:26,246 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: poll_exit
+2021-10-29 15:55:26,246 DEBUG   SenderThread:9017 [sender.py:send_request():252] send_request: poll_exit
+2021-10-29 15:55:26,247 INFO    SenderThread:9017 [file_pusher.py:join():182] waiting for file pusher
+2021-10-29 15:55:26,613 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: get_summary
+2021-10-29 15:55:26,614 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: sampled_history
+2021-10-29 15:55:26,614 DEBUG   HandlerThread:9017 [handler.py:handle_request():130] handle_request: shutdown
+2021-10-29 15:55:26,615 INFO    HandlerThread:9017 [handler.py:finish():731] shutting down handler
+2021-10-29 15:55:27,146 INFO    WriterThread:9017 [datastore.py:close():281] close: /opt/ml/mrc-level2-nlp-07/code/wandb/run-20211029_155517-2yb474pt/run-2yb474pt.wandb
+2021-10-29 15:55:27,612 INFO    SenderThread:9017 [sender.py:finish():1091] shutting down sender
+2021-10-29 15:55:27,612 INFO    SenderThread:9017 [file_pusher.py:finish():177] shutting down file pusher
+2021-10-29 15:55:27,612 INFO    SenderThread:9017 [file_pusher.py:join():182] waiting for file pusher
+2021-10-29 15:55:27,614 INFO    MainThread:9017 [internal.py:handle_exit():77] Internal process exited

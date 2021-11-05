@@ -9,7 +9,7 @@ class ModelArguments:
     """
 
     model_name_or_path: str = field(
-        default="klue/bert-base",
+        default="klue/roberta-large",
         metadata={
             "help": "Path to pretrained model or model identifier from huggingface.co/models"
         },
@@ -18,10 +18,10 @@ class ModelArguments:
         default=None,
         metadata={
             "help": "Pretrained config name or path if not the same as model_name"
-        },
+        }
     )
     tokenizer_name: Optional[str] = field(
-        default=None,
+        default="klue/roberta-large",
         metadata={
             "help": "Pretrained tokenizer name or path if not the same as model_name"
         },
@@ -35,7 +35,7 @@ class DataTrainingArguments:
     """
 
     dataset_name: Optional[str] = field(
-        default="../data/train_dataset",
+        default="/opt/ml/mrc-level2-nlp-07/data/train_dataset",
         metadata={"help": "The name of the dataset to use."},
     )
     overwrite_cache: bool = field(
@@ -74,22 +74,77 @@ class DataTrainingArguments:
             "and end predictions are not conditioned on one another."
         },
     )
+    train_retrieval : bool = field(
+        default=True,
+        metadata={"help": "We probably wanna train retrieval model at once."}
+    )
     eval_retrieval: bool = field(
         default=True,
         metadata={"help": "Whether to run passage retrieval using sparse embedding."},
     )
     num_clusters: int = field(
-        default=64, metadata={"help": "Define how many clusters to use for faiss."}
+        default=32, metadata={"help": "Define how many clusters to use for faiss."}
     )
     top_k_retrieval: int = field(
-        default=1,
+        default=10,
         metadata={
             "help": "Define how many top-k passages to retrieve based on similarity."
         },
     )
     use_faiss: bool = field(
-        default=False, metadata={"help": "Whether to build with faiss"}
+        default=True, metadata={"help": "Whether to build with faiss"}
     )
+
+@dataclass
+class TrainingArguments:
+    """
+    Arguments pertaining to which hyperparameters would trainer takes
+    """
+    output_dir: str = field(
+        default='./models/xlm/',
+        metadata={
+            "help": "Path to save training model"
+        },
+    )
+    num_train_epochs: int = field(
+        default=5,
+        metadata={
+            "help": "Number of epochs for training"
+        },
+    )
+
+    save_total_limit: int = field(
+        default=2,
+        metadata={
+            "help": "Number of checkpoint saved while training"
+        },
+    )
+    save_steps: int = field(
+        default=500,
+        metadata={
+            "help": "Save and delete steps while traininig"
+        },
+    )
+    eval_steps: int = field(
+        default=500,
+        metadata={
+            "help":"Steps for evaluation while training, same as save_steps"
+        },
+    )
+    learning_rate: float = field(
+        default=1e-6,
+        metadata={
+            "help": "The initial learning rate"
+        },
+    )
+    evaluation_strategy: str = field(
+        default='epoch',
+        metadata={
+            "help": "The evaluation strategy to adopt during training"
+        },
+    )
+
     use_elastic: bool = field(
         default=False, metadata={"help": "Whether to use elastic search"}
     )
+

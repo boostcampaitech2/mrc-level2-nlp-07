@@ -5,9 +5,15 @@
 *.txt
 *.bin
 **/__pycache__
+**/runs
 *.pyc
 cache-*
 *.model
-*.yaml
-*.wandb
 *.log
+*.wandb
+*.yaml
+
+*.csv
+*.pth
+**/wandb
+

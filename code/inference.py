@@ -33,6 +33,9 @@ from transformers import (
 from utils_qa import postprocess_qa_predictions, check_no_error
 from trainer_qa import QuestionAnsweringTrainer
 
+
+
+
 from golden_retriever import DenseRetrieval, BertEncoder
 
 from arguments import (
@@ -123,9 +126,12 @@ def run_golden_retrieval(
     data_path: str = "../data",
     context_path: str = "wikipedia_documents.json",
 ) -> DatasetDict:
+
+
     output_path = "./dense_encoder/dense_retrieval/"
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print("Loading Dense Encoder")
+
     p_encoder = torch.load(os.path.join(output_path, 'p_encoder.pt')).to(device)
     q_encoder = torch.load(os.path.join(output_path, 'q_encoder.pt')).to(device)
 
@@ -138,7 +144,12 @@ def run_golden_retrieval(
             num_train_epochs=None,
             weight_decay=0.01
         )
+
+
+
     
+
+
     # Query에 맞는 Passage들을 Retrieval 합니다.
     retriever = DenseRetrieval(
         args=args,
@@ -148,11 +159,15 @@ def run_golden_retrieval(
         p_encoder=p_encoder,
         q_encoder=q_encoder,
         mode="eval",
+
         )
     if data_args.use_elastic:
+
         retriever.build_elastic()
         df = retriever.retrieve_elastic(
             datasets["validation"], topk=data_args.top_k_retrieval
+
+
         )
 
 

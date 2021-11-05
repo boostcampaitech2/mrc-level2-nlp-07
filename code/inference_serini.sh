@@ -2,6 +2,9 @@
 # python inference_serini.py \
 #     --output_dir ./outputs/dh_serini_pre_hard15_0.4_wnorm/ \
 #     --dataset_name ../data/train_dataset/ \
+
+
+
 #     --model_name_or_path Doohae/roberta \
 #     --top_k_retrieval 9 \
 #     --serini_ratio 0.4 \
@@ -29,3 +32,4 @@ do
         --serini_ratio ${ratio} \
         --do_predict \
 done
+

@@ -9,7 +9,11 @@ class ModelArguments:
     """
 
     model_name_or_path: str = field(
-        default="klue/roberta-large",
+
+   
+
+        default="./models/klue15_hard2/checkpoint-14500/",
+
         metadata={
             "help": "Path to pretrained model or model identifier from huggingface.co/models"
         },
@@ -36,6 +40,7 @@ class DataTrainingArguments:
 
     dataset_name: Optional[str] = field(
         default="../data/test_dataset/",
+
         metadata={"help": "The name of the dataset to use."},
     )
     overwrite_cache: bool = field(
@@ -82,7 +87,9 @@ class DataTrainingArguments:
         default=32, metadata={"help": "Define how many clusters to use for faiss."}
     )
     top_k_retrieval: int = field(
+
         default=10,
+
         metadata={
             "help": "Define how many top-k passages to retrieve based on similarity."
         },
@@ -108,6 +115,7 @@ class TrainingArguments:
             "help": "Number of epochs for training"
         },
     )
+
     save_total_limit: int = field(
         default=2,
         metadata={
@@ -126,11 +134,6 @@ class TrainingArguments:
             "help":"Steps for evaluation while training, same as save_steps"
         },
     )
-
-    
-    use_elastic: bool = field(
-        default=False, metadata={"help": "Whether to use elastic search"},
-    )
     learning_rate: float = field(
         default=1e-6,
         metadata={
@@ -143,3 +146,8 @@ class TrainingArguments:
             "help": "The evaluation strategy to adopt during training"
         },
     )
+
+    use_elastic: bool = field(
+        default=False, metadata={"help": "Whether to use elastic search"}
+    )
+

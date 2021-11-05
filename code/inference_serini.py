@@ -20,7 +20,9 @@ from datasets import (
     DatasetDict,
 )
 
+
 from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer,AutoModel
+
 
 from transformers import (
     DataCollatorWithPadding,
@@ -84,17 +86,22 @@ def main():
     config = AutoConfig.from_pretrained(
         model_args.config_name
         if model_args.config_name
-        else "klue/roberta-large",
+
+        else model_args.model_name_or_path,
+
     )
     tokenizer = AutoTokenizer.from_pretrained(
         model_args.tokenizer_name
         if model_args.tokenizer_name
-        else "klue/roberta-large",
+
+        else model_args.model_name_or_path,
         use_fast=True,
     )
     model = AutoModelForQuestionAnswering.from_pretrained(
-        "klue/roberta-large"
-        ,config=config
+        model_args.model_name_or_path,
+        from_tf=bool(".ckpt" in model_args.model_name_or_path),
+        config=config,
+
     )
 
     # True일 경우 : run passage retrieval
@@ -120,7 +127,9 @@ def run_golden_retrieval(
     data_path: str = "../data",
     context_path: str = "wikipedia_documents.json",
 ) -> DatasetDict:
-    output_path = "/opt/ml/mrc-level2-nlp-07/code/dense_encoder/dense_retrieval_allhard_20/"
+
+    output_path = "./dense_encoder/dense_retrieval/"
+
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print("Loading Dense Encoder")
     p_encoder = torch.load(os.path.join(output_path, 'p_encoder.pt')).to(device)

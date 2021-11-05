@@ -10,7 +10,6 @@ from tqdm.auto import tqdm
 from contextlib import contextmanager
 from typing import List, Tuple, NoReturn, Any, Optional, Union
 
-
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from datasets import (
@@ -19,6 +18,23 @@ from datasets import (
     concatenate_datasets,
 )
 
+# from preprocess import tokenizer_filter
+import re
+from transformers import AutoTokenizer
+
+commons = ['▁', '의', '을', '에', '이', '은', '는', '년', '를', '로', '가', '에서', '▁이', '으로', '한', '고', '과', '인', '도', '와', '월', '리', '지', '일', '사', '스', '▁수', '기', '다', '▁있다', '어', '했다', '시', '르', '하였다', '▁그', '자', '하는', '라', '해', '▁전', '하고', '이다', '부', '하여', '군', '▁1', '▁가', '▁사', '대']
+tokenizer = AutoTokenizer.from_pretrained("xlm-roberta-base", use_fast=True)
+
+def preprocess_retrieval(corpus):
+    corpus = corpus.replace(f"\n", "")
+    corpus = re.sub(f"[\"<>\[\].,?!\(\)\:#\|'\=-]", " ", corpus)
+    corpus = ' '.join(corpus.split())
+    return corpus
+
+def tokenizer_filter(corpus):
+    tokenized = tokenizer.tokenize(preprocess_retrieval(corpus))
+    filtered = [token for token in tokenized if token not in commons]
+    return filtered
 
 @contextmanager
 def timer(name):
@@ -63,6 +79,9 @@ class SparseRetrieval:
         self.contexts = list(
             dict.fromkeys([v["text"] for v in wiki.values()])
         )  # set 은 매번 순서가 바뀌므로
+        ## 여기 추가함 ##
+        # self.contexts = [preprocess_retrieval(txt) for txt in self.contexts]
+        ##############
         print(f"Lengths of unique contexts : {len(self.contexts)}")
         self.ids = list(range(len(self.contexts)))
 
@@ -70,7 +89,8 @@ class SparseRetrieval:
         self.tfidfv = TfidfVectorizer(
             tokenizer=tokenize_fn,
             ngram_range=(1, 2),
-            max_features=50000,
+            # ngram_range=(2, 3),
+            max_features=150000,
         )
 
         self.p_embedding = None  # get_sparse_embedding()로 생성합니다
@@ -99,7 +119,7 @@ class SparseRetrieval:
             print("Embedding pickle load.")
         else:
             print("Build passage embedding")
-            self.p_embedding = self.tfidfv.fit_transform(self.contexts)
+            self.p_embedding = self.tfidfv.fit_transform(tqdm(self.contexts))
             print(self.p_embedding.shape)
             with open(emd_path, "wb") as file:
                 pickle.dump(self.p_embedding, file)
@@ -107,7 +127,7 @@ class SparseRetrieval:
                 pickle.dump(self.tfidfv, file)
             print("Embedding pickle saved.")
 
-    def build_faiss(self, num_clusters=64) -> NoReturn:
+    def build_faiss(self, num_clusters=32) -> NoReturn:
 
         """
         Summary:
@@ -393,20 +413,11 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="")
-    parser.add_argument(
-        "--dataset_name", metavar="./data/train_dataset", type=str, help=""
-    )
-    parser.add_argument(
-        "--model_name_or_path",
-        metavar="bert-base-multilingual-cased",
-        type=str,
-        help="",
-    )
-    parser.add_argument("--data_path", metavar="./data", type=str, help="")
-    parser.add_argument(
-        "--context_path", metavar="wikipedia_documents", type=str, help=""
-    )
-    parser.add_argument("--use_faiss", metavar=False, type=bool, help="")
+    parser.add_argument("--dataset_name", default="../data/train_dataset", type=str, help="")
+    parser.add_argument("--model_name_or_path", default="xlm-roberta-large", type=str, help="")
+    parser.add_argument("--data_path", default="../data/", metavar="../data", type=str, help="")
+    parser.add_argument("--context_path", default="wikipedia_documents.json", type=str, help="")
+    parser.add_argument("--use_faiss", default=True, type=bool, help="")
 
     args = parser.parse_args()
 
@@ -421,18 +432,22 @@ if __name__ == "__main__":
     print("*" * 40, "query dataset", "*" * 40)
     print(full_ds)
 
-    from transformers import AutoTokenizer
+#     from transformers import AutoTokenizer
 
-    tokenizer = AutoTokenizer.from_pretrained(
-        args.model_name_or_path,
-        use_fast=False,
-    )
+#     tokenizer = AutoTokenizer.from_pretrained(
+#         args.model_name_or_path,
+#         use_fast=False,
+#     )
 
     retriever = SparseRetrieval(
-        tokenize_fn=tokenizer.tokenize,
+        # tokenize_fn=tokenizer.tokenize,
+        tokenize_fn=tokenizer_filter,
         data_path=args.data_path,
         context_path=args.context_path,
     )
+    
+    retriever.get_sparse_embedding()
+    retriever.build_faiss(num_clusters=32)
 
     query = "대통령을 포함한 미국의 행정부 견제권을 갖는 국가 기관은?"
 

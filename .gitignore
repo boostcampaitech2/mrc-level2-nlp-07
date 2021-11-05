@@ -13,3 +13,4 @@ cache-*
 *.yaml
 *.csv
 *.pth
+**/wandb

@@ -5,10 +5,15 @@
 *.txt
 *.bin
 **/__pycache__
+**/runs
 *.pyc
 cache-*
 *.model
 *.log
 *.wandb
 *.yaml
+
+*.csv
+*.pth
 **/wandb
+

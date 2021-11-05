@@ -1,3 +1,3 @@
-python dense.py \
-    --mode train \
-    --epoch 20 
+python golden_retriever.py \
+    --mode eval \
+    # --epoch 1

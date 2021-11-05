@@ -9,7 +9,11 @@ class ModelArguments:
     """
 
     model_name_or_path: str = field(
+<<<<<<< HEAD
         default="klue/roberta-large",
+=======
+        default="./models/klue15_hard2/checkpoint-14500/",
+>>>>>>> 1ec842f4bafe0c045d611551db1f2b9ac8e0f169
         metadata={
             "help": "Path to pretrained model or model identifier from huggingface.co/models"
         },
@@ -35,7 +39,11 @@ class DataTrainingArguments:
     """
 
     dataset_name: Optional[str] = field(
+<<<<<<< HEAD
         default="/opt/ml/mrc-level2-nlp-07/data/train_dataset",
+=======
+        default="../data/test_dataset/",
+>>>>>>> 1ec842f4bafe0c045d611551db1f2b9ac8e0f169
         metadata={"help": "The name of the dataset to use."},
     )
     overwrite_cache: bool = field(
@@ -74,10 +82,6 @@ class DataTrainingArguments:
             "and end predictions are not conditioned on one another."
         },
     )
-    train_retrieval : bool = field(
-        default=True,
-        metadata={"help": "We probably wanna train retrieval model at once."}
-    )
     eval_retrieval: bool = field(
         default=True,
         metadata={"help": "Whether to run passage retrieval using sparse embedding."},
@@ -86,13 +90,17 @@ class DataTrainingArguments:
         default=32, metadata={"help": "Define how many clusters to use for faiss."}
     )
     top_k_retrieval: int = field(
+<<<<<<< HEAD
         default=10,
+=======
+        default=15,
+>>>>>>> 1ec842f4bafe0c045d611551db1f2b9ac8e0f169
         metadata={
             "help": "Define how many top-k passages to retrieve based on similarity."
         },
     )
     use_faiss: bool = field(
-        default=True, metadata={"help": "Whether to build with faiss"}
+        default=False, metadata={"help": "Whether to build with faiss"}
     )
 
 @dataclass

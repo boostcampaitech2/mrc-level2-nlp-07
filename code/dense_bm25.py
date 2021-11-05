@@ -7,7 +7,6 @@ from pprint import pprint
 import os
 import argparse
 import pickle
-import wandb
 
 import torch
 from torch.utils.data import DataLoader, TensorDataset
@@ -23,11 +22,6 @@ from transformers import (
 from rank_bm25 import BM25Okapi
 from preprocess import preprocess_retrieval
 
-# # 1. Start a new run
-# wandb.init(project='odqa_dense_enc', entity='hyesukim')
-
-# # 2. Save model inputs and hyperparameters
-# config = wandb.config
 
 # 난수 고정
 def set_seed(random_seed):
@@ -88,14 +82,12 @@ class DenseRetrieval:
             for idx, c in enumerate(dataset["context"]):
                 while True:
                     neg_idxs = np.random.randint(len(corpus), size=num_neg)  # gold 방식!
-                    hard_neg_idx = random.randint(0, len(eval(dataset.loc[idx]["all_hard_neg"]))-1)  # hard_neg도 random 추출
+                    hard_neg_idx = random.randint(0, len(eval(dataset.loc[idx]["all_hard_neg"]))-1)  # hard 1 random 추출
 
                     if not c in corpus[neg_idxs]:
                         p_neg = corpus[neg_idxs]
 
                         p_with_neg.append(c)
-                        # hard_neg = eval(dataset.loc[idx]["negative_samples"])[0]
-                        # p_with_neg.append(hard_neg)
                         hard_neg = eval(dataset.loc[idx]["all_hard_neg"])[hard_neg_idx]
                         p_with_neg.append(hard_neg)
                         p_with_neg.extend(p_neg)
@@ -125,7 +117,7 @@ class DenseRetrieval:
 
         max_len = p_seqs["input_ids"].size(-1)
         if self.mode == 'train':
-            p_seqs["input_ids"] = p_seqs["input_ids"].view(-1, num_neg+2, max_len)
+            p_seqs["input_ids"] = p_seqs["input_ids"].view(-1, num_neg+2, max_len)  # ground_truth + num_neg + hard_neg => num_neg+2
             p_seqs["attention_mask"] = p_seqs["attention_mask"].view(-1, num_neg+2, max_len)
             p_seqs["token_type_ids"] = p_seqs["token_type_ids"].view(-1, num_neg+2, max_len)
         else:
@@ -349,7 +341,8 @@ def main(arg):
     assert arg.mode.lower()=="train" or arg.mode.lower()=="eval", "Set Retrieval Mode : [train] or [eval]"
     
     if arg.mode.lower() == "train":
-        # train_dataset = load_from_disk(data_path + train_path)["train"]
+        # train_path = "gen_wiki"  # GPT-2 생성 데이터
+        # train_dataset = load_from_disk(data_path + train_path)["train"]  # 원 training set
         train_path = "negative_samples_all.csv"
         train_dataset = pd.read_csv(data_path + train_path, engine="python")
 
@@ -365,12 +358,8 @@ def main(arg):
         )
         model_checkpoint = arg.model_name
         tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
-        if arg.epoch == 20:
-            p_encoder = BertEncoder.from_pretrained(model_checkpoint).to(args.device)
-            q_encoder = BertEncoder.from_pretrained(model_checkpoint).to(args.device)
-        else:
-            p_encoder = torch.load(os.path.join("./dense_encoder/", f"dense_retrieval_allhard_20", 'p_encoder.pt')).to(device)
-            q_encoder = torch.load(os.path.join("./dense_encoder/", f"dense_retrieval_allhard_20", 'q_encoder.pt')).to(device)
+        p_encoder = BertEncoder.from_pretrained(model_checkpoint).to(args.device)
+        q_encoder = BertEncoder.from_pretrained(model_checkpoint).to(args.device)
 
         retriever = DenseRetrieval(
             args=args,
@@ -405,11 +394,6 @@ def main(arg):
         assert os.path.exists(os.path.join(output_path, 'p_encoder.pt')) and os.path.exists(os.path.join(output_path, 'q_encoder.pt')), "Train and Load Models First!!"
         p_encoder = torch.load(os.path.join(output_path, 'p_encoder.pt')).to(device)
         q_encoder = torch.load(os.path.join(output_path, 'q_encoder.pt')).to(device)
-        # assert os.path.exists(os.path.join("./dense_encoder/", 'p_encoder.pt')) and os.path.exists(os.path.join("./dense_encoder/", 'q_encoder.pt')), "Train and Load Models First!!"
-        # p_encoder = torch.load(os.path.join("./dense_encoder/", 'p_encoder.pt')).to(device)
-        # q_encoder = torch.load(os.path.join("./dense_encoder/", 'q_encoder.pt')).to(device)
-        # p_encoder.to(device)
-        # q_encoder.to(device)
         p_encoder.eval()
         q_encoder.eval()
         
@@ -438,28 +422,36 @@ def main(arg):
         )
         
         print(f"Num Evaluation : {len(test_dataset)}")
-        right, wrong = 0, 0
-        for i in tqdm(range(len(test_dataset))):
+        right_wrong = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+        k_lst = [1, 3, 5, 7, 9, 10, 15, 20]
+        for i in tqdm(range(len(test_dataset['question']))):
             query = test_dataset['question'][i]
             if i % 50 == 0:
                 print(query)
                 print(test_dataset['context'][i])
-            results = retriever.get_relevant_doc(query=query, k=arg.topk)
-            indices = results.tolist()
+            _, indices = retriever.get_relevant_doc(query=query, k=arg.topk)
             predict = []
             for k, idx in enumerate(indices):
-                predict.append(retriever.dataset["context"][idx])
+                predict.append(retriever.contexts[idx])
                 if i % 50 == 0:
                     print("-"*100)
                     print(f"Top-{k+1} predict")
-                    print(retriever.dataset["context"][idx])
-            if test_dataset['context'][i] in predict:
-                right += 1
-            else:
-                wrong += 1
-        
+                    print(retriever.contexts[idx])
+
+            for k_idx in range(len(k_lst)):
+                k = k_lst[k_idx]
+                if test_dataset['context'][i] in predict[:k]:
+                # if test_dataset['context'].tolist()[i] in predict:  # GPT-2 generated data
+                    right_wrong[k_idx][0] += 1  # right
+                else:
+                    right_wrong[k_idx][1] += 1  # wrong
+            
         print(output_path)
-        print(f"Top-{arg.topk} Acc. : {100*right/(right+wrong):.2f}%")            
+        for k_idx in range(len(k_lst)):
+            right = right_wrong[k_idx][0]
+            total = sum(right_wrong[k_idx])
+            score = 100 * right / total
+            print(f"Top-{k_lst[k_idx]} Acc. : {score:.2f}%")               
             
                 
 if __name__ == "__main__":

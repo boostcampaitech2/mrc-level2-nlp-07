@@ -1,7 +1,4 @@
-# mrc-level2-nlp-07
-mrc-level2-nlp-07 created by GitHub Classroom
-
-# Boostcamp Relation Extraction Competition
+# Boostcamp Machine Reading Comprehension (Open Domain Question Answering) Competition
 ## **Table of contents**
 
 1. [Introduction](#introduction)

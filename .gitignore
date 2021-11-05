@@ -5,6 +5,7 @@
 *.txt
 *.bin
 **/__pycache__
+**/runs
 *.pyc
 cache-*
 *.model

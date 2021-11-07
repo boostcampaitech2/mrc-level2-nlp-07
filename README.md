@@ -15,34 +15,30 @@
 <br/>
 
 
-## ☕ 조지KLUE니
+## 🐶 TEAM : 조지KLUE니
+### 🔅 Members  
 
-## **개요**
+김보성|김지후|김혜수|박이삭|이다곤|전미원|정두해
+:-:|:-:|:-:|:-:|:-:|:-:|:-:
+![image1][image1]|![image2][image2]|![image3][image3]|![image4][image4]|![image5][image5]|![image6][image6]|![image7][image7]
+[Github](https://github.com/Barleysack)|[Github](https://github.com/JIHOO97)|[Github](https://github.com/vgptnv)|[Github](https://github.com/Tentoto)|[Github](https://github.com/DagonLee)|[Github](https://github.com/ekdub92)|[Github](https://github.com/Doohae)
 
-1. Introduction
-2. Project Outline
-3. Solution
-4. How to Use
-
-# 1. Introduction
-
-[🔅 Members](https://www.notion.so/bcc26f407b22470a9cbcaa6a238b573f)
 
 ### 🔅 Contribution
 
-`김보성`  Modeling(MaskedLM with Bi-LSTM, MaskedLM with Autoencoder)•Reference searching•Paper implementation•Ensemble•github management
+`김보성` Modeling(MaskedLM with Bi-LSTM, MaskedLM with Autoencoder) • Reference searching • Paper implementation • Ensemble • github management
 
-`김지후`  
+`김지후`
 
-`김혜수`  Reference Searching•ElasticSearch config & Optimization•Data Processing•Sparse/Dense Retrieval
+`김혜수` Reference Searching • ElasticSearch config & Optimization • Data Processing • Sparse/Dense Retrieval
 
-`박이삭`  Reference Searching•Github management
+`박이삭` Reference Searching • Github management
 
-`이다곤`  Data Processing•Generative MRC
+`이다곤` Data Processing • Generative MRC
 
-`전미원`  Data Preprocessing•Add Elastic Search into baseline•Re-ranking MRC outputs w/ Retrieval•Ensemble
+`전미원` Data Preprocessing • Add Elastic Search into baseline • Re-ranking MRC outputs w/ Retrieval • Ensemble
 
-`정두해`  Data Exploration•Baseline Abstraction•Sparse/Dense Retriever•Reader Model Searching•Data Augmentation•MRC Hyperparameter Tuning•Pre/Postprocessing
+`정두해` Data Exploration • Baseline Abstraction • Sparse/Dense Retriever • Reader Model Searching • Data Augmentation • MRC Hyperparameter Tuning • Pre/Postprocessing
 
 # 2. Project Outline
 
@@ -67,9 +63,11 @@ AI stage에서 제공한 server, GPU
 
 ### KEY POINT
 
-- DPR 논문의 Gold 방식의 Dense Retriever 모델을 차용해 elasticsearch와 결합하여 retriever 모델 구현
+- ODQA Task (Open Domain Question Answering) : Retrieval + Reader 모델이 결합된 Hybrid model
+- DPR 논문의 negative sample 추가 학습 + Dense Retriever 모델을 차용해 elasticsearch와 결합하여 retriever 모델 구현
+- GPT-2를 활용해 wiki 데이터의 context에 paired된 질의를 생성해 Retrieval Dense Encoder 모델 학습
 - Data Augmentation을 통해 지문의 길이를 늘린 후 학습 데이터로 이용
-- 대량의 한국어 데이터로 사전학습 되어 있는 klue/roberta-large 모델을 리더 모델로 사용
+- 대량의 한국어 데이터로 사전학습 되어 있는 `klue/roberta-large` 모델을 리더 모델로 사용
 
 ### Checklist
 
@@ -78,9 +76,9 @@ AI stage에서 제공한 server, GPU
 - [x]  Data Augmentation(`Back translation`, `Question generation`)
 - [x]  Data Postprocessing
 - [x]  Experimental Logging (`WandB`)
-- [x]  Retrieval (`dense -- FAISS,using simple dual-encoders`, `sparse -- TF-IDF,BM25,Elastic search`)
+- [x]  Retrieval (`dense -- FAISS,using simple dual-encoders`, `sparse -- TF-IDF,BM25,Elastic search`, `Dense+Sparse -- using a linear combination of dense and sparse scores as the new raking function`)
 - [x]  Custom Model Architecture(`Roberta with BiLSTM`, `Roberta with Autoencoder`)
-- [x]  Re-ranker (`changing scoring function using BERTserini`)
+- [x]  Re-ranker ( combining the reader score with the retriever score via linear combination `inspired by BERTserini`)
 - [x]  Ensemble
 - [ ]  K-fold cross validation
 - [ ]  Shorten inference time when using elastic search

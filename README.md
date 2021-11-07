@@ -101,19 +101,20 @@ AI stage에서 제공한 server, GPU
 
 ### Experiments
 
-| Tried Experiments | Performance Improvement | Retrieval / Reader |
+| Tried Experiments | Performance Improvement | Pipeline |
 | --- | --- | --- |
-| `DPR implementation` | <ul><li> [x] </li> | <ul><li>[x] Retrieval</li><li>[ ] Reader</li></ul> |
-| `DPR implementation` `ElasticSearch` `Dense+Sparse` `Context Concat(hard negative)` `Retrival+Reader Re-Ranker`  | <ul><li> [x] </li> |
-| `DPR implementation` `ElasticSearch` `Dense+Sparse` `Context Concat(hard negative)` `Retrival+Reader Re-Ranker`  | <ul><li> [x] </li> |
-| `DPR implementation` `ElasticSearch` `Dense+Sparse` `Context Concat(hard negative)` `Retrival+Reader Re-Ranker`  | <ul><li> [x] </li> |
-| `DPR implementation` `ElasticSearch` `Dense+Sparse` `Context Concat(hard negative)` `Retrival+Reader Re-Ranker`  | <ul><li> [x] </li> |
-| `DPR implementation` `ElasticSearch` `Dense+Sparse` `Context Concat(hard negative)` `Retrival+Reader Re-Ranker`  | <ul><li> [x] </li> |
-| `DPR implementation` `ElasticSearch` `Dense+Sparse` `Context Concat(hard negative)` `Retrival+Reader Re-Ranker`  | <ul><li> [x] </li> |
-| `DPR implementation` `ElasticSearch` `Dense+Sparse` `Context Concat(hard negative)` `Retrival+Reader Re-Ranker`  | <ul><li> [x] </li> |
-| `DPR implementation` `ElasticSearch` `Dense+Sparse` `Context Concat(hard negative)` `Retrival+Reader Re-Ranker`  | <ul><li> [x] </li> |
-| `TF-IDF` `ElasticSearch config setting` `Roberta with Bi-LSTM` `Roberta with Autoencodr` `Back-Translation` `Question Generation` |
-
+| `TF-IDF` | <ul><li> [x] </li> | `Retrieval` |
+| `ElasticSearch config setting` | <ul><li> [ ] </li> | `Retrieval` |
+| `Question Generation (using GPT-2)` | <ul><li> [ ] </li> | `Retrieval` |
+| `hard negative (using BM25 + ElasticSearch)` | <ul><li> [x] </li> | `Retrieval` |
+| `DPR implementation` | <ul><li> [x] </li> | `Retrieval` |
+| `Dense+Sparse` | <ul><li> [x] </li> | `Retrieval` |
+| `Roberta with Bi-LSTM` | <ul><li> [ ] </li> | `Reader` |
+| `Roberta with Autoencoder` | <ul><li> [ ] </li> | `Reader` |
+| `Back-Translation` | <ul><li> [ ] </li> | `Reader` |
+| `Context Concat(hard negative)` | <ul><li> [x] </li> | `Reader` |
+| `Retrival+Reader Re-Ranker`  | <ul><li> [x] </li> | `Inference` |
+   
 
 # 4. How to Use
 

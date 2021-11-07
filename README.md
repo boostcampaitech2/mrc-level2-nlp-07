@@ -1,10 +1,10 @@
 # Boostcamp Machine Reading Comprehension Competition
 ## **Table of contents**
 
-1. [Introduction](#introduction)
-2. [Project Outline](#project-outline)
-3. [Solution](#solution)
-4. [How to Use](#how-to-use)
+1. [Introduction](#1-introduction)
+2. [Project Outline](#2-project-outline)
+3. [Solution](#3-solution)
+4. [How to Use](#4-how-to-use)
 
 # 1. Introduction  
 <br/>

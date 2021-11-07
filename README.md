@@ -26,7 +26,7 @@
 
 ### 🔅 Contribution
 
-`김보성` Modeling(MaskedLM with Bi-LSTM, MaskedLM with Autoencoder) • Reference searching • Paper implementation • Ensemble • github management
+`김보성` Modeling • Reference searching • Paper implementation • Ensemble • github management
 
 `김지후`
 

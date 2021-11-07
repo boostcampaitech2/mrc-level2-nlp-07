@@ -101,19 +101,19 @@ AI stage에서 제공한 server, GPU
 
 ### Experiments
 
-| Tried Experiments | Performance Improvement | Pipeline |
+| Tried Experiments | Pipeline | Performance Improvement |
 | --- | --- | --- |
-| `TF-IDF` | <ul><li> [x] </li> | `Retrieval` |
-| `ElasticSearch config setting` | <ul><li> [ ] </li> | `Retrieval` |
-| `Question Generation (using GPT-2)` | <ul><li> [ ] </li> | `Retrieval` |
-| `hard negative (using BM25 + ElasticSearch)` | <ul><li> [x] </li> | `Retrieval` |
-| `DPR implementation` | <ul><li> [x] </li> | `Retrieval` |
-| `Dense+Sparse` | <ul><li> [x] </li> | `Retrieval` |
-| `Roberta with Bi-LSTM` | <ul><li> [ ] </li> | `Reader` |
-| `Roberta with Autoencoder` | <ul><li> [ ] </li> | `Reader` |
-| `Back-Translation` | <ul><li> [ ] </li> | `Reader` |
-| `Context Concat(hard negative)` | <ul><li> [x] </li> | `Reader` |
-| `Retrival+Reader Re-Ranker`  | <ul><li> [x] </li> | `Inference` |
+| `TF-IDF` | `Retrieval` | <ul><center><li> [x] </li></center> | 
+| `ElasticSearch config setting` | `Retrieval` | <ul><li> [ ] </li> | 
+| `Question Generation (using GPT-2)` | `Retrieval` | <ul><li> [ ] </li> |
+| `hard negative (using BM25 + ElasticSearch)` | `Retrieval` | <ul><li> [x] </li> |
+| `DPR implementation` | `Retrieval` | <ul><li> [x] </li> |
+| `Dense+Sparse` | `Retrieval` | <ul><li> [x] </li> |
+| `Roberta with Bi-LSTM` | `Reader` | <ul><li> [ ] </li> |
+| `Roberta with Autoencoder` | `Reader` | <ul><li> [ ] </li> |
+| `Back-Translation` | `Reader` | <ul><li> [ ] </li> |
+| `Context Concat(hard negative)` | `Reader` | <ul><li> [x] </li> |
+| `Retrival+Reader Re-Ranker`  | `Inference` | <ul><li> [x] </li> |
    
 
 # 4. How to Use

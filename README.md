@@ -30,19 +30,19 @@
 
 ### 🔅 Contribution
 
-`김보성` Modeling(MaskedLM with Bi-LSTM, MaskedLM with Autoencoder)•Reference searching•Paper implementation•Ensemble•github management
+`김보성`  Modeling(MaskedLM with Bi-LSTM, MaskedLM with Autoencoder)•Reference searching•Paper implementation•Ensemble•github management
 
 `김지후`  
 
-`김혜수` Reference Searching•ElasticSearch config & Optimization•Data Processing•Sparse/Dense Retrieval•Re-ranking MRC outputs w/ Retrieval
+`김혜수`  Reference Searching•ElasticSearch config & Optimization•Data Processing•Sparse/Dense Retrieval
 
-`박이삭` Reference Searching•Github management
+`박이삭`  Reference Searching•Github management
 
-`이다곤` Data Processing•Generative MRC
+`이다곤`  Data Processing•Generative MRC
 
-`전미원` Data Preprocessing•Add Elastic Search into baseline•Re-ranking MRC outputs w/ Retrieval•Ensemble
+`전미원`  Data Preprocessing•Add Elastic Search into baseline•Re-ranking MRC outputs w/ Retrieval•Ensemble
 
-`정두해` Data Exploration•Baseline Abstraction•Sparse/Dense Retriever•Reader Model Searching•Data Augmentation•MRC Hyperparameter Tuning•Pre/Postprocessing
+`정두해`  Data Exploration•Baseline Abstraction•Sparse/Dense Retriever•Reader Model Searching•Data Augmentation•MRC Hyperparameter Tuning•Pre/Postprocessing
 
 # 2. Project Outline
 

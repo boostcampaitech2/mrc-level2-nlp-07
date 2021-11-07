@@ -103,7 +103,7 @@ AI stage에서 제공한 server, GPU
 
 | Tried Experiments | Pipeline | Performance Improvement |
 | --- | --- | --- |
-| `TF-IDF` | `Retrieval` | <ul><center><li> [x] </li></center> | 
+| `TF-IDF` | `Retrieval` | <ul><li><center> [x] </center></li> | 
 | `ElasticSearch config setting` | `Retrieval` | <ul><li> [ ] </li> | 
 | `Question Generation (using GPT-2)` | `Retrieval` | <ul><li> [ ] </li> |
 | `hard negative (using BM25 + ElasticSearch)` | `Retrieval` | <ul><li> [x] </li> |

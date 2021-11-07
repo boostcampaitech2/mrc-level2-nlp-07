@@ -30,7 +30,7 @@
 
 `김지후`
 
-`김혜수` Reference Searching • ElasticSearch config & Optimization • Data Processing • Sparse/Dense Retrieval
+`김혜수` Reference Searching • ElasticSearch config & Optimization • Data Processing • Sparse/Dense Retrieval • Re-ranking MRC outputs w/ Retrieval
 
 `박이삭` Reference Searching • Github management
 

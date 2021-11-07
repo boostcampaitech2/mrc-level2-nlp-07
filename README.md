@@ -103,7 +103,7 @@ AI stage에서 제공한 server, GPU
 
 | Experiments | Micro F1-score | Performance Improvement |
 | --- | --- | --- |
-| 성능 향상을 이끌어낸 실험 | `DPR implementation` `ElasticSearch` `Dense+Sparse` `Context Concat(hard negative)` `Retrival+Reader Re-Ranker`  | <ul><li> [x] </li><li>- |
+| 성능 향상을 이끌어낸 실험 | `DPR implementation` `ElasticSearch` `Dense+Sparse` `Context Concat(hard negative)` `Retrival+Reader Re-Ranker`  | <ul><li> [x] </li><li> |
 | 성능이 오르진 않았지만 의미 있는 실험 | `TF-IDF` `ElasticSearch config setting` `Roberta with Bi-LSTM` `Roberta with Autoencodr` `Back-Translation` `Question Generation` |
 
 

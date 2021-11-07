@@ -40,6 +40,17 @@
 
 `정두해` Data Exploration • Baseline Abstraction • Sparse/Dense Retriever • Reader Model Searching • Data Augmentation • MRC Hyperparameter Tuning • Pre/Postprocessing
 
+[image1]: https://avatars.githubusercontent.com/u/56079922?v=4
+[image2]: https://avatars.githubusercontent.com/u/57887761?v=4
+[image3]: https://avatars.githubusercontent.com/u/62708568?v=4
+[image4]: https://avatars.githubusercontent.com/u/80071163?v=4
+[image5]: https://avatars.githubusercontent.com/u/43575986?v=4
+[image6]: https://avatars.githubusercontent.com/u/42200769?v=4
+[image7]: https://avatars.githubusercontent.com/u/80743307?v=4
+
+<br/>
+
+
 # 2. Project Outline
 
 - Task : Extractive-based MRC를 위한 ODQA 모델 구축

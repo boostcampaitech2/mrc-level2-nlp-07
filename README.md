@@ -91,6 +91,7 @@ AI stage에서 제공한 server, GPU
 - [x]  Custom Model Architecture(`Roberta with BiLSTM`, `Roberta with Autoencoder`)
 - [x]  Re-ranker ( combining the reader score with the retriever score via linear combination `inspired by BERTserini`)
 - [x]  Ensemble
+- [ ]  Don't stop Pretraining (additional MLM Task, TAPT + DAPT)
 - [ ]  K-fold cross validation
 - [ ]  Shorten inference time when using elastic search
 

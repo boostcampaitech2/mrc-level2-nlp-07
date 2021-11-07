@@ -15,167 +15,154 @@
 <br/>
 
 
-## ☕ TEAM : 조지KLUE니
-### 🔅 Members  
+## ☕ 조지KLUE니
 
-김보성|김지후|김혜수|박이삭|이다곤|전미원|정두해
-:-:|:-:|:-:|:-:|:-:|:-:|:-:
-![image1][image1]|![image2][image2]|![image3][image3]|![image4][image4]|![image5][image5]|![image6][image6]|![image7][image7]
-[Github](https://github.com/Barleysack)|[Github](https://github.com/JIHOO97)|[Github](https://github.com/vgptnv)|[Github](https://github.com/Tentoto)|[Github](https://github.com/DagonLee)|[Github](https://github.com/ekdub92)|[Github](https://github.com/Doohae)
+## **개요**
 
-### 🔅 Contribution  
-`김보성` &nbsp; Preprocessing(Data pruning • clean punctuation) • Ensemble(Weighted Vote) • Github management  
-`김지후` &nbsp; EDA • Data Augmentation(`EDA` • `BackTranslation`) • Binary classifier experiment  
-`김혜수` &nbsp; Preprocessing (NER Marker) • Data Augmentation(Entity Swap augmentation)  
-`박이삭` &nbsp; Preprocessing(clean punctuation • special character removal) • Binary classifier experiment  
-`이다곤` &nbsp; Custom Token Addition • Model Embedding Size Modification • Vocab Modification • Tokenizer Experiment  
-`전미원` &nbsp; Data Visualization • Modeling • Binary classifier experiment • Ensemble  
-`정두해` &nbsp; EDA • Data Augmentation(`EDA` • `AEDA` • `RandomDeletion` • `BackTranslation`) • Code Abstraction  
+1. Introduction
+2. Project Outline
+3. Solution
+4. How to Use
 
-[image1]: https://avatars.githubusercontent.com/u/56079922?v=4
-[image2]: https://avatars.githubusercontent.com/u/57887761?v=4
-[image3]: https://avatars.githubusercontent.com/u/62708568?v=4
-[image4]: https://avatars.githubusercontent.com/u/80071163?v=4
-[image5]: https://avatars.githubusercontent.com/u/43575986?v=4
-[image6]: https://avatars.githubusercontent.com/u/42200769?v=4
-[image7]: https://avatars.githubusercontent.com/u/80743307?v=4
+# 1. Introduction
 
-<br/>
+[🔅 Members](https://www.notion.so/bcc26f407b22470a9cbcaa6a238b573f)
 
-# 2. Project Outline  
-<p align="center">
-   <img src="https://user-images.githubusercontent.com/43575986/136648106-87ba583b-61ba-43a0-a05e-95bf8a0c8d8d.png" width="500" height="300">
-   <img src="https://user-images.githubusercontent.com/43575986/136648152-16d3caa3-323e-4240-8e6c-a9cd6c6279d7.png" width="500" height="300">
-</p>
+### 🔅 Contribution
 
-- Task : 문장 내 개체간 관계 추출 (Relation Extraction)
-- Date : 2021.09.27 - 2021.10.07 (2 weeks)
-- Description : QA 시스템 구축, 감정 분석, 요약 등 다양한 NLP task에서 문장 속 단어간의 관계 데이터는 정보 파악에서 중요한 역할을 합니다. 이번 대회의 목적은 문장, 단어에 대한 정보를 통해 문장 속에서 단어 사이의 관계를 추론하는 모델을 학습시키는 것이었습니다. 결과적으로는 총 30개의 관계 클래스 중 하나를 예측한 결과와 30개의 클래스 각각에 대해서 예측한 확률을 반환하는 모델을 생성하도록 하였습니다.
-- Train : 32,470개
-- Test : 7,765개
+`**김보성`  `Modeling(MaskedLM with Bi-LSTM, MaskedLM with Autoencoder)`  `Reference searching` `Paper implementation` `Ensemble` `github management`**
 
+`**김지후`**  
+
+`**김혜수` `Reference Searching`** `**ElasticSearch config & Optimization**` `**Data Processing**` `**Sparse/Dense Retrieval**` `**Re-ranking MRC outputs w/ Retrieval**`
+
+`**박이삭` `Reference Searching` `Github management`** 
+
+`**이다곤`  `Data Processing` `Generative MRC`** 
+
+`**전미원` `Data Preprocessing`**  `**Add Elastic Search into baseline**` `**Re-ranking MRC outputs w/ Retrieval**` `**Ensemble**`
+
+`**정두해` `Data Exploration` `Baseline Abstraction` `Sparse/Dense Retriever`** `**Reader Model Searching**` `**Data Augmentation**` `**MRC Hyperparameter Tuning` `Pre/Postprocessing`**
+
+# 2. Project Outline
+
+- Task : Extractive-based MRC를 위한 ODQA 모델 구축
+- Date : 2021.10.12 - 2021.11.04 (4 weeks)
+- Description : **본 ODQA 대회에서 우리가 만들 모델은 two-stage**로 구성되어 있습니다. **첫 단계는 질문에 관련된 문서를 찾아주는 "retriever"** 단계이고, **다음으로는 관련된 문서를 읽고 적절한 답변을 찾거나 만들어주는 "reader"** 단계입니다. 두 가지 단계를 각각 구성하고 그것들을 적절히 통합하게 되면, 어려운 질문을 던져도 답변을 해주는 ODQA 시스템을 여러분들 손으로 직접 만들어보게 됩니다.
+- Train : 3,952개
+- Validation : 240개
+- Test : 600개
 
 ### 🏆 Final Score
-![1](https://user-images.githubusercontent.com/62708568/136651953-f4c13acb-0736-4f8b-8530-b7ab2d309dd3.JPG)
 
 대회 사이트 : [AI stage](https://stages.ai/competitions/75/overview/description)
 
-<br/>
+## **Hardware**
 
+AI stage에서 제공한 server, GPU
+
+- GPU: V100
 
 # 3. Solution
 
 ### KEY POINT
 
-- No-relation의 데이터가 상대적으로 많았습니다.
-- No-relation(label:0)과 Have-relation(label:1~29) 데이터 간의 분포 차이도 컸습니다.
-    - 이를 해결하기 위해 둘을 분류하는 binary classifier model을 구현했습니다.
-- 데이터 불균형 문제가 심각하여 Data augmentation에 대한 중요도가 크다고 판단했습니다.
-    - Back translation
-    - `EDA` `AEDA` `RandomDeletion`
-    - 대칭성이 있는 relation의 경우 subject, object `EntitySwap`
-- Relation Extraction Task를 잘 수행하기 위한 fine-tuning 기법으로 데이터에 NER marker를 추가했습니다.
-- Weighted ensemble을 통한 성능 향상을 기대했습니다.
+- DPR 논문의 Gold 방식의 Dense Retriever 모델을 차용해 elasticsearch와 결합하여 retriever 모델 구현
+- Data Augmentation을 통해 지문의 길이를 늘린 후 학습 데이터로 이용
+- 대량의 한국어 데이터로 사전학습 되어 있는 klue/roberta-large 모델을 리더 모델로 사용
 
 ### Checklist
 
-- [x]  Exploratory Data Analysis
-- [x]  Data Visualization
-- [x]  Data Preprocessing(`special character removal`)
-- [x]  Inserting NER Marker
-- [x]  Transformer based model (`BERT`, `klue/RoBERTa` `XLM-RoBERTa`)
-- [x]  Data Augmentation(`Back Translation`, `EDA`, `AEDA`, `Entity-Swap`)
-- [x]  Model with binary classifier
-- [x]  Ensemble(weighted voting)
-- [x]  Experimental Logging (`WandB`, `tensorboard`)
-- [ ]  Customize Model Architecture
-- [ ]  Customize Loss (Focal Loss + Label Smoothing)
-- [ ]  Stratified k-fold cross validation
-  
-### Evaluation  
+- [x]  EDA
+- [x]  Data Preprocessing(`special character removal`, `getting answer spans' start position with special character tokens`)
+- [x]  Data Augmentation(`Back translation`, `Question generation`)
+- [x]  Data Postprocessing
+- [x]  Experimental Logging (`WandB`)
+- [x]  Retrieval (`dense -- FAISS,using simple dual-encoders`, `sparse -- TF-IDF,BM25,Elastic search`)
+- [x]  Custom Model Architecture(`Roberta with BiLSTM`, `Roberta with Autoencoder`)
+- [x]  Re-ranker (`changing scoring function using BERTserini`)
+- [x]  Ensemble
+- [ ]  K-fold cross validation
+- [ ]  Shorten inference time when using elastic search
 
-단일 모델의 Evaluation 결과는 아래와 같습니다.  
-아래 리스트의 모델은 특수문자를 제거한 (`special character removal`) 데이터 전처리 과정을 거친 후 학습이 진행되었습니다. 
+[Evaluation](https://www.notion.so/b3aac65c45924c378f0ec07f7b05a38a)
 
-| Method | Micro F1-score |
-| --- | --- |
-| `KLUE/BERT-base` | 67.602 |
-| `KLUE/RoBERTa-base` | 68.064 |
-| `kykim/bert-kor-base` | 68.9 |
-| `KLUE/RoBERTa-large` | 71.167 |
-| `KLUE/RoBERTa-large` + NER Marker(w/ adding special_token) | 69.615 |
-| `KLUE/RoBERTa-large` + NER Marker(w/o adding special_token) | 70.444 |
-| `KLUE/RoBERTa-large` + Entity Marker | 68.617 |
-| `KLUE/RoBERTa-large` + NER Marker + Data Augmentation(`EntitySwap`) | 69.646 |
-| `XLM-RoBERTa-large` + Data Augmentation (`EDA`:Original=1:1) | 68.994 |
-| `KLUE/RoBERTa-large` + Data Augmentation (`RandomDeletion`:Original=1:1) | 71.167 |
-| `KLUE/RoBERTa-large` + Data Augmentation (`EDA`:Original=1:1) | 72.862 |
-| `KLUE/RoBERTa-large` + binary classifier + Data Augmentation (`BackTranslation`:Original=1:1) | 70.731 |
-| `KLUE/RoBERTa-large` + Data Augmentation (`BackTranslation`:Original=1:1) | 72.969 |
-
-# 4. How to Use  
+# 4. How to Use
 
 ## **Installation**
 
 다음과 같은 명령어로 필요한 libraries를 다운 받습니다.
-```
-pip install -r requirements.txt
-```  
 
-KoEDA 모듈
-```
-pip install koeda  
-apt-get install g++ openjdk-8-jdk python3-dev python3-pip curl  
-python3 -m pip install --upgrade pip  
-python3 -m pip install konlpy  
-apt-get install curl git  
-bash <(curl -s https://raw.githubusercontent.com/konlpy/konlpy/master/scripts/mecab.sh)  
-```  
+`pip install -r requirements.txt`
+
+Elasticsearch 모듈 (출처 : [서중원 멘토님 깃허브](https://github.com/thejungwon/search-engine-tutorial))
+
+`apt-get update && apt-get install -y gnupg2`
+
+`wget -qO - [https://artifacts.elastic.co/GPG-KEY-elasticsearch](https://artifacts.elastic.co/GPG-KEY-elasticsearch) | apt-key add -`
+
+`apt-get install apt-transport-https`
+
+`echo "deb [https://artifacts.elastic.co/packages/7.x/apt](https://artifacts.elastic.co/packages/7.x/apt) stable main" | tee /etc/apt/sources.list.d/elastic-7.x.list`
+
+`apt-get update && apt-get install elasticsearch`
+
+`service elasticsearch start`
+
+`cd /usr/share/elasticsearch`
+
+`bin/elasticsearch-plugin install analysis-nori`
+
+`service elasticsearch restart`
+
+`pip install elasticsearch`
+
+BM25 모듈
+
+`pip install rank_bm25`
 
 Google deep_translator 모듈
-```
-pip install -U deep-translator
-```  
-  
+
+`pip install -U deep-translator`
+
 ## **Dataset**
 
-파일: dataset/train/train.csv, dataset/test/test_data.csv
+파일: data/train_dataset/train, data/train_dataset/validation, data/test_dataset/validation 
 
 ## **Data Analysis**
 
-파일: [code/EDA.ipynb](https://github.com/boostcampaitech2/klue-level2-nlp-07/blob/master/code/EDA.ipynb), [/concat.ipynb](https://github.com/boostcampaitech2/klue-level2-nlp-07/blob/master/code/concat.ipynb), [/cleanse.ipynb](https://github.com/boostcampaitech2/klue-level2-nlp-07/blob/master/code/cleanse.ipynb), [/preprocess_EDA.ipynb](https://github.com/boostcampaitech2/klue-level2-nlp-07/blob/master/code/preprocess_EDA.ipynb), [/papago.ipynb](https://github.com/boostcampaitech2/klue-level2-nlp-07/blob/master/code/papago.ipynb)
+파일: 
 
-## **Data preprocessing & Data Augmentation**
+## **Data preprocessing**
 
-파일: [code/preprocess_EDA.ipynb](https://github.com/boostcampaitech2/klue-level2-nlp-07/blob/master/code/preprocess_EDA.ipynb), [translate.py](https://github.com/boostcampaitech2/klue-level2-nlp-07/blob/master/code/translate.py), [translate_entity.py](https://github.com/boostcampaitech2/klue-level2-nlp-07/blob/master/code/translate_entity.py), [create_augments.py](https://github.com/boostcampaitech2/klue-level2-nlp-07/blob/master/code/create_augments.py), [create_entityswap_augments.py](https://github.com/boostcampaitech2/klue-level2-nlp-07/blob/master/code/create_entityswap_augments.py), 
+파일: 
 
 ## **Modeling**
 
-파일: [train.py](https://github.com/boostcampaitech2/klue-level2-nlp-07/blob/master/code/train.py), [inference.py](https://github.com/boostcampaitech2/klue-level2-nlp-07/blob/master/code/inference.py), [train_binary_classifier.py](https://github.com/boostcampaitech2/klue-level2-nlp-07/blob/master/code/train_binary_classifier.py), [inference_binary_classifier.py](https://github.com/boostcampaitech2/klue-level2-nlp-07/blob/master/code/inference_binary_classifier.py)
+파일: train.py, inference.py, 
 
 ## **Ensemble**
 
-파일: [blender.py](http://blender.py), [blender.ipynb](https://github.com/boostcampaitech2/klue-level2-nlp-07/blob/master/code/blender.ipynb)
+파일: mixing_bowl.ipynb, mixing_bowl (1).ipynb
 
 ## Directory
 
 ```
 .
-├──klue-level2-nlp-07
-|    ├──code/
-|    ├──dataset
-│        ├── test
-│        ├── train
-
+├── mrc-level2-nlp-07
+|    ├── code
+│        ├── outputs
+│        ├── dense_encoder
+│        ├── retriever
+|    ├── data
+│        ├── train_dataset
+|            ├── train
+|            ├── validation
+│        ├── test_dataset
+|            ├── validation
+|        ├── wikipedia_passages.json
 ```
 
-- `code` 파일 안에는 각각 **data preprocessing** • **train** • **inference**가 가능한 라이브러리가 들어있습니다
-- 사용자는 전체 코드를 내려받은 후, argument 옵션을 지정하여 개별 라이브러리 모델을 활용할 수 있습니다
-
-## **Hardware**
-본 Repository는 AI stage에서 제공한 server, GPU를 기반으로 작성된 코드입니다.
-- GPU: V100
-
-
-
-
+- `code` 파일 안에는 각각 **data preprocessing** • **train** • **inference**가 가능한 라이브러리가 들어있습니다.
+- `train.py`를 실행시키면 logs, results, best_model 폴더에 결과들이 저장됩니다.
+- 사용자는 전체 코드를 내려받은 후, argument 옵션을 지정하여 개별 라이브러리 모델을 활용할 수 있습니다.

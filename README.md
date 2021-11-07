@@ -26,19 +26,19 @@
 
 ### 🔅 Contribution
 
-`김보성` Modeling • Reference searching • Paper implementation • Ensemble • github management
+`김보성`  Modeling • Reference searching • Paper implementation • Ensemble • github management
 
-`김지후`
+`김지후`  FAISS • Reference Searching
 
-`김혜수` Reference Searching • ElasticSearch config & Optimization • Data Processing • Sparse/Dense Retrieval • Re-ranking MRC outputs w/ Retrieval
+`김혜수`  Reference Searching • ElasticSearch config & Optimization • Data Processing • Sparse/Dense Retrieval • Re-ranking MRC outputs w/ Retrieval
 
-`박이삭` Reference Searching • Github management
+`박이삭`  Reference Searching • Github management
 
-`이다곤` Data Processing • Generative MRC
+`이다곤`  Data Processing • Generative MRC
 
-`전미원` Data Preprocessing • Add Elastic Search into baseline • Re-ranking MRC outputs w/ Retrieval • Ensemble
+`전미원`  Data Preprocessing • Add Elastic Search into baseline • Re-ranking MRC outputs w/ Retrieval • Ensemble
 
-`정두해` Data Exploration • Baseline Abstraction • Sparse/Dense Retriever • Reader Model Searching • Data Augmentation • MRC Hyperparameter Tuning • Pre/Postprocessing
+`정두해`  Data Exploration • Baseline Abstraction • Sparse/Dense Retriever • Reader Model Searching • Data Augmentation • MRC Hyperparameter Tuning • Pre/Postprocessing
 
 [image1]: https://avatars.githubusercontent.com/u/56079922?v=4
 [image2]: https://avatars.githubusercontent.com/u/57887761?v=4
@@ -61,8 +61,8 @@
 - Test : 600개
 
 ### 🏆 Final Score
-
-대회 사이트 : [AI stage](https://stages.ai/competitions/75/overview/description)
+[image](https://user-images.githubusercontent.com/62708568/140643039-32a5da8a-0643-48f6-b272-4fbb6d58c57b.png)
+대회 사이트 : [AI stage](https://stages.ai/competitions/77/leaderboard)
 
 ## **Hardware**
 
@@ -95,7 +95,13 @@ AI stage에서 제공한 server, GPU
 - [ ]  K-fold cross validation
 - [ ]  Shorten inference time when using elastic search
 
-[Evaluation](https://www.notion.so/b3aac65c45924c378f0ec07f7b05a38a)
+### Experiments
+
+| Method | Micro F1-score |
+| --- | --- |
+| 성능 향상을 이끌어낸 실험 | `DPR implementation` `ElasticSearch` `Dense+Sparse` `Context Concat(hard negative)` `Retrival+Reader Re-Ranker`  |
+| 성능이 오르진 않았지만 의미 있는 실험 | `TF-IDF` `ElasticSearch config setting` `Roberta with Bi-LSTM` `Roberta with Autoencodr` `Back-Translation` `Question Generation` |
+
 
 # 4. How to Use
 
@@ -133,15 +139,15 @@ Google deep_translator 모듈
 
 ## **Data Analysis**
 
-파일: 
+파일: code/notebooks/(folder)
 
 ## **Data preprocessing**
 
-파일: 
+파일: preprocess.py, process_data.py, back_translation.py
 
 ## **Modeling**
 
-파일: train.py, inference.py, 
+파일: train.py, inference.py, golden_retriever.py, golden_serini.py, inference_serini.py
 
 ## **Ensemble**
 

@@ -61,7 +61,11 @@
 - Test : 600개
 
 ### 🏆 Final Score
-[image](https://user-images.githubusercontent.com/62708568/140643039-32a5da8a-0643-48f6-b272-4fbb6d58c57b.png)
+<br/>
+<p align="center">
+   <img src="https://user-images.githubusercontent.com/62708568/140643039-32a5da8a-0643-48f6-b272-4fbb6d58c57b.png" style="width:1000px;"/>
+</p>
+<br/>
 대회 사이트 : [AI stage](https://stages.ai/competitions/77/leaderboard)
 
 ## **Hardware**

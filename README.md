@@ -28,7 +28,7 @@
 
 `김보성`  Modeling • Reference searching • Paper implementation • Ensemble • github management
 
-`김지후`  FAISS • Reference Searching
+`김지후`   FAISS • Reference Searching
 
 `김혜수`  Reference Searching • ElasticSearch config & Optimization • Data Processing • Sparse/Dense Retrieval
 
